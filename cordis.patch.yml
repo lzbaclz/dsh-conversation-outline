@@ -1,0 +1,8 @@
+# dsh-conversation-outline bundle patch: mounts the plugin row into the host
+# composition of a dsh profile. The plugin is client-only (all UI lives in the
+# browser bundle); this host row exists so the roster scan finds the package
+# and the composition has a resolvable plugin body.
+- insert:
+    - id: dsh-conversation-outline
+      name: dsh-conversation-outline
+      config: {}

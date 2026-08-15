@@ -1,0 +1,18 @@
+{
+  // Client program (browser side): compiles src/client to lib/client/*.js with
+  // DOM lib + react-jsx. `types: []` keeps @types/node out of the browser
+  // program. Its own declarationDir nests client declarations at
+  // lib/types/client/*.d.ts (exports["./client"].types), so the host program's
+  // lib/types/ stays clean.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": [],
+    "rootDir": "src/client",
+    "outDir": "lib/client",
+    "declarationDir": "lib/types/client"
+  },
+  "include": ["src/client"],
+  "exclude": []
+}

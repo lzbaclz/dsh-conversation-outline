@@ -1,0 +1,25 @@
+{
+  // Host program (Node side). Never compiles src/client — the client program
+  // (tsconfig.client.json) keeps the browser Context augmentation separate from
+  // the host one (both packages declare `Context.sessions` etc., which collide
+  // inside a single program).
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "declaration": true,
+    "declarationDir": "lib/types",
+    "outDir": "lib",
+    "rootDir": "src",
+    "types": ["node"],
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src"],
+  "exclude": ["src/client"]
+}
