@@ -3,25 +3,29 @@
 [![npm](https://img.shields.io/npm/v/dsh-conversation-outline.svg)](https://www.npmjs.com/package/dsh-conversation-outline)
 [![license](https://img.shields.io/npm/l/dsh-conversation-outline.svg)](LICENSE)
 
-DeepSeek Harness 的「会话大纲」客户端插件：在 Web GUI 右上角提供一个 **Codex 风格浮动面板**，
-列出当前会话里的每一个用户问题，支持**搜索**、**加载更早**与**点击跳转**（切到 Chat 视图 →
-滚动定位 → 高亮闪烁）。界面中英双语（zh-CN / en），跟随 DSH 界面语言。
+DeepSeek Harness 的「会话大纲」客户端插件：在 Web GUI **右侧提供一条常驻细竖条（会话 minimap）**，
+每个问题对应一根小横条；**鼠标悬停后展开预览面板**，列出每个问题开头的几个字（超出省略），支持
+**搜索**、**加载更早**与**点击跳转**（切到 Chat 视图 → 滚动定位 → 高亮闪烁）。界面中英双语
+（zh-CN / en），跟随 DSH 界面语言。
 
-A Codex-style conversation outline for DeepSeek Harness: a floating panel listing
-every user question in the current conversation, with search, load-older and
-click-to-jump. Bilingual zh-CN / en.
+A Codex-style conversation outline for DeepSeek Harness: a slim always-visible
+right-edge rail (one bar per question), expanding on hover into a preview panel
+of question openings, with search, load-older and click-to-jump. Bilingual
+zh-CN / en.
 
 ## 特性 / Features
 
-- **浮动徽章（Badge）**：右上角常驻小圆钮，实时显示当前会话的问题数；点击开合面板，`Esc` 关闭。
-- **问题列表**：按时间顺序列出每个用户问题（含 mid-turn 追问 `steering` 消息，带 `追问 / steer` 标签），
-  每条显示 `#轮次` 徽标、两行截断的正文预览、本地时间 `HH:MM`，并可一键复制。
-- **点击跳转**：点击任意一行 → 切到 Chat 视图 → 滚动到对应消息 → 1.8s 高亮闪烁（尊重
-  `prefers-reduced-motion`）。
-- **搜索**：大小写不敏感的子串过滤（对扁平化后的正文匹配）。
+- **右侧细条（Rail）**：会话右侧常驻一条窄窄的竖条，每个问题一根小横条（minimap），
+  平时不占地方、不影响阅读；超过 60 个问题时折叠为顶部 `+N` 标记。
+- **悬停展开（Hover panel）**：鼠标移到细条上，右侧滑出预览面板——每个问题显示开头几个字
+  （单行截断）、`#轮次` 徽标与 `HH:MM` 时间；鼠标移开自动收起（240ms 缓冲），触屏设备点击
+  细条可固定面板，`Esc` 关闭。
+- **点击跳转**：点击细条上的小横条或面板里的任意一行 → 切到 Chat 视图 → 滚动到对应消息 →
+  1.8s 高亮闪烁（尊重 `prefers-reduced-motion`）。
+- **搜索**：面板顶部搜索框，大小写不敏感的子串过滤。
 - **加载更早**：面板底部 `加载更早 / Load older` 按钮，调用会话 `loadOlder()` 分页翻历史。
-- **实时更新**：会话进行中，新问题自动出现在列表里（订阅会话快照）。
-- **会话隔离**：跟随当前会话；切换会话时面板自动收起、徽章计数重算。
+- **实时更新**：会话进行中，新问题自动出现（订阅会话快照）。
+- **会话隔离**：跟随当前会话；切换会话时面板自动收起、细条按新会话重算。
 - **双语 i18n**：zh-CN / en，随 DSH 界面语言切换。
 
 ## 界面预览 / Preview
@@ -72,11 +76,13 @@ dsh plugin --profile web list
 
 ## 使用 / Usage
 
-安装并重启后，右上角出现大纲徽章（显示当前会话的问题数）：
+安装并重启后，会话右侧出现一条细竖条（当前会话的「问题 minimap」）：
 
-1. **打开面板**：点击徽章；按 `Esc` 或点击 × 关闭。
-2. **跳转**：点击任意问题行——DSH 切到 Chat 视图，滚动到那条消息并闪烁高亮。
-3. **搜索**：在搜索框输入关键字，列表即时过滤。
+1. **悬停展开**：鼠标移到细条上，右侧滑出预览面板（每个问题开头几个字 + `#轮次` + 时间）；
+   鼠标移开自动收起。触屏设备点击细条可固定面板，`Esc` 或 × 关闭。
+2. **跳转**：点击细条上的小横条或面板里的任意问题行——DSH 切到 Chat 视图，滚动到那条消息
+   并闪烁高亮。
+3. **搜索**：在面板顶部搜索框输入关键字，列表即时过滤。
 4. **翻历史**：点击底部 `加载更早 / Load older` 加载更早的问题（按钮在加载中置灰）。
 5. **复制**：鼠标移到某行，点复制按钮即可拷贝该问题全文。
 

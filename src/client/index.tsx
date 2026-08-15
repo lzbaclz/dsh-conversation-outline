@@ -26,17 +26,18 @@ export function apply(ctx: ClientContext): void {
   // Panel CSS as an HMR-safe <style data-plugin> tag (effect-owned).
   injectStyle(ctx)
 
-  // Badge + panel in the frame-wide overlay layer. slots.inject waits for the
-  // layout's declaration of `shell.overlay` and routes the registration (and
-  // its unload cascade) through this fiber. `locale: NS` gives the component
-  // the typed `t` seat; the inject factory passes the sessions service face.
+  // Right-edge rail + hover panel in the frame-wide overlay layer.
+  // slots.inject waits for the layout's declaration of `shell.overlay` and
+  // routes the registration (and its unload cascade) through this fiber.
+  // `locale: NS` gives the component the typed `t` seat; the inject factory
+  // passes the sessions service face.
   ctx.slots.inject(
     'shell.overlay',
     () =>
       ctx.slots.register(
         {
           name: 'shell.overlay',
-          id: 'dsh-conversation-outline.badge',
+          id: 'dsh-conversation-outline.rail',
           locale: NS,
           inject: () => ({ sessions: ctx.sessions }),
         },

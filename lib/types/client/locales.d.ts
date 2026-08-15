@@ -1,8 +1,8 @@
 export declare const NS = "dsh-conversation-outline";
 export interface OutlineLocale {
-    /** Panel header title / badge aria-label. */
+    /** Panel header title / rail aria-label. */
     title: string;
-    /** Badge / header count, `{count}` substituted. */
+    /** Header count, `{count}` substituted. */
     count: string;
     searchPlaceholder: string;
     empty: string;
@@ -16,6 +16,10 @@ export interface OutlineLocale {
     close: string;
     /** Console-only message when a jump cannot find the target row. */
     jumpFailed: string;
+    /** Rail bar aria-label, `{n}` = 1-based question ordinal. */
+    barLabel: string;
+    /** Rail "+N" overflow marker aria-label, `{count}` substituted. */
+    moreBars: string;
 }
 export declare const zh: OutlineLocale;
 export declare const en: OutlineLocale;

@@ -12,9 +12,9 @@ import type {} from '@deepseek-ai/dsh-client-ui-slots'
 export const NS = 'dsh-conversation-outline'
 
 export interface OutlineLocale {
-  /** Panel header title / badge aria-label. */
+  /** Panel header title / rail aria-label. */
   title: string
-  /** Badge / header count, `{count}` substituted. */
+  /** Header count, `{count}` substituted. */
   count: string
   searchPlaceholder: string
   empty: string
@@ -28,6 +28,10 @@ export interface OutlineLocale {
   close: string
   /** Console-only message when a jump cannot find the target row. */
   jumpFailed: string
+  /** Rail bar aria-label, `{n}` = 1-based question ordinal. */
+  barLabel: string
+  /** Rail "+N" overflow marker aria-label, `{count}` substituted. */
+  moreBars: string
 }
 
 export const zh: OutlineLocale = {
@@ -42,6 +46,8 @@ export const zh: OutlineLocale = {
   steerTag: '追问',
   close: '关闭',
   jumpFailed: '跳转失败：未找到对应消息',
+  barLabel: '跳到第 {n} 个问题',
+  moreBars: '还有 {count} 个更早的问题',
 }
 
 export const en: OutlineLocale = {
@@ -56,6 +62,8 @@ export const en: OutlineLocale = {
   steerTag: 'steer',
   close: 'Close',
   jumpFailed: 'Jump failed: target message not found',
+  barLabel: 'Jump to question {n}',
+  moreBars: '{count} more earlier questions',
 }
 
 export const dictionaries = { zh, en }

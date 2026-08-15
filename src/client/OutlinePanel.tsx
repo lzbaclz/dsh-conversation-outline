@@ -18,11 +18,14 @@ import {
 } from './outline.ts'
 
 /**
- * Badge + outline panel (implementation-spec §2.1/§2.2).
+ * Conversation-outline rail + hover panel (implementation-spec §2.1/§2.2,
+ * revised per user feedback): NO top-right badge — instead a thin, always-
+ * visible right-edge rail (one bar per question, like a conversation minimap).
+ * Hovering the rail expands a preview panel listing each question's opening
+ * words (single-line truncated); clicking a bar or a row jumps to that message.
  *
  * Rendered by the shell as a `shell.overlay` entry (frame-wide, click-through
- * layer): the badge is the pill in the top-right corner, the panel opens on
- * click. Props come from the composed four-share contract — the global
+ * layer). Props come from the composed four-share contract — the global
  * standard kit (`useSessions`), the injected sessions service face, and the
  * typed `t` seat for our locale namespace.
  */
@@ -40,6 +43,10 @@ const JUMP_HEADROOM = 96
 const JUMP_TIMEOUT_MS = 1500
 const FLASH_MS = 1900
 const COPIED_MS = 1500
+/** Grace period before the hover panel collapses (lets the pointer travel). */
+const COLLAPSE_DELAY_MS = 240
+/** Rail capacity; older questions fold into the "+N" marker. */
+const MAX_BARS = 60
 
 /**
  * The conversation view's header tablist, scoped to the conversation root:
@@ -69,7 +76,11 @@ function scheduleRaf(rafRef: { current: number[] }, fn: () => void): void {
 }
 
 /** Timeout that prunes itself from the tracking ref once it fires. */
-function scheduleTimeout(timeoutRef: { current: number[] }, fn: () => void, ms: number): void {
+function scheduleTimeout(
+  timeoutRef: { current: number[] },
+  fn: () => void,
+  ms: number,
+): void {
   const id = window.setTimeout(() => {
     timeoutRef.current = timeoutRef.current.filter((x) => x !== id)
     fn()
@@ -99,13 +110,19 @@ export function OutlinePanel({ sessions, useSessions, t }: OutlinePanelProps): R
   const timeoutsRef = useRef<number[]>([])
   const rafsRef = useRef<number[]>([])
   const flashedRowRef = useRef<Element | null>(null)
+  const collapseTimerRef = useRef<number | null>(null)
 
-  // Cancel pending jump work (RAFs/timeouts) and the flash highlight.
+  // Cancel pending jump work (RAFs/timeouts), the flash highlight, and a
+  // scheduled hover collapse.
   const clearPending = useCallback(() => {
     for (const id of rafsRef.current) window.cancelAnimationFrame(id)
     for (const id of timeoutsRef.current) window.clearTimeout(id)
     rafsRef.current = []
     timeoutsRef.current = []
+    if (collapseTimerRef.current !== null) {
+      window.clearTimeout(collapseTimerRef.current)
+      collapseTimerRef.current = null
+    }
     if (flashedRowRef.current) {
       flashedRowRef.current.removeAttribute('data-dsh-outline-flash')
       flashedRowRef.current = null
@@ -119,7 +136,7 @@ export function OutlinePanel({ sessions, useSessions, t }: OutlinePanelProps): R
     setOpen(false)
   }, [current, clearPending])
 
-  // Escape closes the panel.
+  // Escape closes the panel (hover-opened or tap-pinned).
   useEffect(() => {
     if (!open) return
     const onKey = (event: KeyboardEvent) => {
@@ -129,23 +146,34 @@ export function OutlinePanel({ sessions, useSessions, t }: OutlinePanelProps): R
     return () => window.removeEventListener('keydown', onKey)
   }, [open])
 
-  // Root data attribute drives the wide-screen column yield; always removed on
-  // effect teardown so an unmount can never leave the layout shifted.
-  useEffect(() => {
-    const root = document.documentElement
-    if (open) root.setAttribute('data-dsh-outline-open', '')
-    else root.removeAttribute('data-dsh-outline-open')
-    return () => root.removeAttribute('data-dsh-outline-open')
-  }, [open])
-
-  // Unmount cleanup: cancel pending RAFs/timeouts and clear the flash attr.
-  useEffect(() => () => clearPending(), [clearPending])
+  // Unmount cleanup: cancel pending flash/copied timeouts, jump RAFs, collapse
+  // timer, and the flash attribute.
+  useEffect(() => clearPending, [clearPending])
 
   const allItems = useMemo(() => (snapshot ? collectQuestions(snapshot) : []), [snapshot])
   const items = useMemo(() => filterQuestions(allItems, query), [allItems, query])
   const blank = snapshot?.blank ?? true
   const hasMore = snapshot?.hasMore ?? false
   const loadingOlder = snapshot?.loadingOlder ?? false
+
+  // ---- hover-open mechanics (rail ⇄ panel travel survives via the grace) ---
+  const cancelCollapse = useCallback(() => {
+    if (collapseTimerRef.current !== null) {
+      window.clearTimeout(collapseTimerRef.current)
+      collapseTimerRef.current = null
+    }
+  }, [])
+  const scheduleCollapse = useCallback(() => {
+    cancelCollapse()
+    collapseTimerRef.current = window.setTimeout(() => {
+      collapseTimerRef.current = null
+      setOpen(false)
+    }, COLLAPSE_DELAY_MS)
+  }, [cancelCollapse])
+  const showPanel = useCallback(() => {
+    cancelCollapse()
+    setOpen(true)
+  }, [cancelCollapse])
 
   /** Find the chat row for a node key (pure predicate over DOM rows). */
   const findRow = useCallback((key: string): Element | null => {
@@ -168,12 +196,9 @@ export function OutlinePanel({ sessions, useSessions, t }: OutlinePanelProps): R
         behavior: reduced ? 'auto' : 'smooth',
       })
     }
-    // Clear a previous row's flash when switching targets — a second jump
-    // within FLASH_MS must not leave the earlier row highlighted (its own
-    // timeout would no-op because the ref already moved on).
-    const previous = flashedRowRef.current
-    if (previous && previous !== row) {
-      previous.removeAttribute('data-dsh-outline-flash')
+    // A second jump within FLASH_MS: clear the previous row first.
+    if (flashedRowRef.current && flashedRowRef.current !== row) {
+      flashedRowRef.current.removeAttribute('data-dsh-outline-flash')
     }
     flashedRowRef.current = row
     row.setAttribute('data-dsh-outline-flash', 'true')
@@ -253,36 +278,68 @@ export function OutlinePanel({ sessions, useSessions, t }: OutlinePanelProps): R
     }
   }, [])
 
-  // No current session, or a blank session → render nothing (badge included).
+  // No current session, or a blank session → render nothing (rail included).
   // MUST stay below every hook: this overlay entry stays mounted across
   // session changes, and blank flips false on the first accepted prompt, so a
-  // conditional hook order would violate the Rules of Hooks.
+  // conditional hook would crash React (reviewer MUST-FIX #1).
   if (!current || !session || blank) return null
+
+  // Rail bars: chronological top→bottom, capped at MAX_BARS with the overflow
+  // folded into a "+N" marker (the rail is a minimap, not the full list).
+  const start = Math.max(0, allItems.length - MAX_BARS)
+  const bars = allItems.slice(start)
+  const overflow = start
 
   return (
     <>
-      <button
-        type="button"
-        className="dso-badge"
+      {/* Right-edge rail: always visible while the session has questions. */}
+      <div
+        className="dso-rail"
+        role="group"
         aria-label={t('title')}
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        tabIndex={0}
+        onMouseEnter={showPanel}
+        onMouseLeave={scheduleCollapse}
+        onFocus={showPanel}
+        onBlur={scheduleCollapse}
+        onClick={(event) => {
+          // Tap (touch) on the strip itself pins/unpins the panel.
+          if (event.target === event.currentTarget) setOpen((v) => !v)
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            setOpen((v) => !v)
+          }
+        }}
       >
-        <svg
-          className="dso-badge-icon"
-          width="14"
-          height="14"
-          viewBox="0 0 16 16"
-          fill="none"
-          aria-hidden="true"
-        >
-          <path d="M2.5 3.5h11M2.5 8h11M2.5 12.5h11" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-        </svg>
-        <span className="dso-badge-count">{allItems.length}</span>
-      </button>
+        {overflow > 0 && (
+          <span className="dso-rail-more" aria-label={t('moreBars', { count: overflow })}>
+            +{overflow}
+          </span>
+        )}
+        {bars.map((item, index) => (
+          <button
+            key={item.key}
+            type="button"
+            className="dso-bar"
+            aria-label={t('barLabel', { n: start + index + 1 })}
+            onClick={() => jumpTo(item.key)}
+          />
+        ))}
+      </div>
 
+      {/* Hover-expanded preview panel: question openings, one line each. */}
       {open && (
-        <div className="dso-panel" role="region" aria-label={t('title')}>
+        <div
+          className="dso-panel"
+          role="region"
+          aria-label={t('title')}
+          onMouseEnter={showPanel}
+          onMouseLeave={scheduleCollapse}
+          onFocus={showPanel}
+          onBlur={scheduleCollapse}
+        >
           <header className="dso-panel-header">
             <span className="dso-panel-title">{t('title')}</span>
             <span className="dso-panel-count">{t('count', { count: allItems.length })}</span>

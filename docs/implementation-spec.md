@@ -183,52 +183,56 @@ manual style-tag approach is preferred for lower build risk.
 
 ## 2. Product spec (the panel)
 
-### 2.1 Surfaces
+### 2.1 Surfaces (REVISED — rail + hover panel, no badge)
 
-1. **Badge** (always mounted, `shell.overlay` entry): fixed top-right
-   (`top: 64px; right: 18px`), pill button showing an outline icon + question
-   count for the CURRENT session; hidden (renders nothing) when there is no
-   current session or the session is blank. Click toggles the panel. `aria-label`
-   localized, `:focus-visible` outline, hover lift.
-2. **Panel** (mounted with the badge entry, shown when open): fixed right
-   (`right: 18px`, `top: 64px`), `width: min(360px, calc(100vw - 24px))`,
-   `max-height: min(70dvh, ...)`, rounded 16px card, internal scroll, backdrop
-   blur, uses DSH theme vars. Sections:
-   - Header: title `会话大纲 / Outline` + count + close button (X).
-   - Search input (placeholder localized; filters case-insensitively on the
-     flattened question text).
-   - Question list, **chronological** (flow order): one row per user question:
-     - leading turn badge `#<turn>` (when the location yields a turn number),
-     - 2-line clamped text preview,
-     - trailing time `HH:MM` (from `node.data.time`, local time),
-     - a copy button (copies the question text),
-     - steering messages (kind `steering`) get a subtle `追问` / `steer` tag.
-     Clicking a row = jump (2.2).
-   - Footer: `加载更早 / Load older` button when `snapshot.hasMore` (disabled
-     while `loadingOlder`); calls `session.loadOlder()`.
+Per user feedback the top-right capsule badge was replaced: the AgentTeams
+plugin already occupies that corner. The outline now lives on the right EDGE.
+
+1. **Rail** (always mounted, `shell.overlay` entry, id
+   `dsh-conversation-outline.rail`): a thin fixed strip on the right edge
+   (`right: 0`, vertically centered `top: 50%`), one small horizontal bar per
+   user question in chronological order top→bottom — a conversation minimap.
+   Capped at 60 bars; overflow folds into a top `+N` marker. Bars are real
+   `<button>`s with localized `aria-label` (`跳到第 {n} 个问题`); clicking a
+   bar jumps. The strip itself is `role="group"` with `aria-label`, focusable
+   (focus/Enter opens the panel for keyboard users). Hidden (renders nothing)
+   when there is no current session or the session is blank.
+2. **Panel** (rendered only while open): fixed right overlay
+   (`right: 16px`, vertically centered), `width: min(340px, calc(100vw - 24px))`,
+   `max-height: min(70vh, 600px)`, rounded 16px card, internal scroll, backdrop
+   blur, DSH theme vars. Sections:
+   - Header: title `会话大纲 / Outline` + count + close button (×).
+   - Search input (localized placeholder; case-insensitive filter).
+   - Question list, **chronological**: one row per user question — `#<turn>`
+     badge, **single-line truncated** text preview (the question's opening
+     words; longer text ellipsizes), trailing `HH:MM` time, copy button,
+     `追问`/`steer` tag for steering messages. Clicking a row = jump (2.2).
+   - Footer: `加载更早 / Load older` when `snapshot.hasMore` (disabled while
+     `loadingOlder`); calls `session.loadOlder()`.
    - Empty state when no user messages in the loaded window.
 3. Behavior rules:
-   - Follows `sessions.list.current`; on session change the panel closes
-     (navigate → collapse) and the badge re-derives count for the new session.
-   - Panel open state is local component state; Escape closes; click on badge
-     toggles.
-   - Wide screens: optionally make the active column yield (padding-right) while
-     the panel is open, exactly like agent-teams' `html[data-agent-teams-panel-open]
-     [data-phase=active]` rule, using a root data attribute
-     `data-dsh-outline-open`. Narrow screens (≤960px): no yield, panel is an
-     overlay (position over content). Respect `prefers-reduced-motion`.
-   - While a session is running, new user messages appear in the list live
-     (the snapshot subscription covers it).
+   - **Hover-open**: mouseenter on the rail (or panel) opens the panel;
+     mouseleave schedules a collapse after a 240ms grace (canceled on re-enter,
+     so the pointer can travel rail→panel). Touch devices: tapping the strip
+     (non-bar area) pins/unpins the panel; `Escape` or × closes. The panel is
+     a pure OVERLAY — no column yield, no layout shift.
+   - Follows `sessions.list.current`; on session change the panel closes and
+     pending jump work is canceled (navigate → collapse).
+   - While a session is running, new user messages appear live (snapshot
+     subscription covers it; the rail grows a bar per question).
 
 ### 2.2 Jump-to-message algorithm (core feature)
 
 On row click, given the target `node.key`:
 
-1. Ensure the Chat view is active: read `document.querySelector('[role="tablist"]')`;
-   if it exists and its active tab is not the first tab, click the first
+1. Ensure the conversation page is mounted: abort when
+   `document.querySelector('[data-conversation-scroll]')` is missing. If a
+   conversation-root header tablist exists (found by walking up from
+   `scrollport.parentElement` — the scrollport itself may contain other
+   tablists such as the trajectory event-details tabs), click its first
    `button[role="tab"]` (chat is `order: 0` — always first; `setView("chat")`
-   is idempotent, so clicking unconditionally is safe). If no tablist exists
-   (e.g. hero phase), abort silently.
+   is idempotent). A profile without extra views has no tablist — fine, the
+   rows are already visible.
 2. Wait for the target row to render: poll with `requestAnimationFrame` up to
    ~1500ms for `[data-chat-anchor-key="<node.key>"]` inside the chat list. The
    row is guaranteed to be in the loaded window (it comes from the snapshot),
