@@ -74,6 +74,6 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/<owner>/dsh-conversation-outline.git"
+    "url": "git+https://github.com/lzbaclz/dsh-conversation-outline.git"
   }
 }
