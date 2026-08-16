@@ -309,7 +309,17 @@ git push origin main --tags
 
 ## 7. 发布后推广（Post-publish Promotion）
 
-1. **README badges**：npm 发布后，顶部徽章自动点亮（`img.shields.io/npm/v/...` 无需改动）。
+1. **README badges 换回动态**：npm 发布前徽章用静态形式（`badge/npm-v0.1.0` /
+   `badge/license-MIT`，避免 "package not found"）。**发布成功后**，把两份 README 顶部
+   换回动态徽章，自动显示真实版本与下载量：
+
+   ```markdown
+   [![npm](https://img.shields.io/npm/v/dsh-conversation-outline.svg)](https://www.npmjs.com/package/dsh-conversation-outline)
+   [![npm downloads](https://img.shields.io/npm/dm/dsh-conversation-outline.svg)](https://www.npmjs.com/package/dsh-conversation-outline)
+   [![license](https://img.shields.io/npm/l/dsh-conversation-outline.svg)](LICENSE)
+   ```
+
+   （每次升版本后静态 `npm-vX.Y.Z` 徽章也要同步更新，动态徽章则不用管。）
 2. **README 安装命令切换**：把推荐安装方式从 `github:<owner>/...`（或 `link:`）换成
    `dsh plugin --profile web add dsh-conversation-outline`（npm 形态），GitHub 方式保留为
    「用最新提交」的备选。

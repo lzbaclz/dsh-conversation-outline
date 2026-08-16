@@ -2,9 +2,8 @@
 
 ![banner](assets/banner.png)
 
-[![npm](https://img.shields.io/npm/v/dsh-conversation-outline.svg)](https://www.npmjs.com/package/dsh-conversation-outline)
-[![npm downloads](https://img.shields.io/npm/dm/dsh-conversation-outline.svg)](https://www.npmjs.com/package/dsh-conversation-outline)
-[![license](https://img.shields.io/npm/l/dsh-conversation-outline.svg)](LICENSE)
+[![npm](https://img.shields.io/badge/npm-v0.1.0-cb3837)](https://www.npmjs.com/package/dsh-conversation-outline)
+[![license](https://img.shields.io/badge/license-MIT-2fbf8f)](LICENSE)
 [![node](https://img.shields.io/badge/node-%5E22.19%20%7C%7C%20%3E%3D24-5FA04E?logo=nodedotjs)](https://nodejs.org/)
 [![stars](https://img.shields.io/github/stars/lzbaclz/dsh-conversation-outline.svg)](https://github.com/lzbaclz/dsh-conversation-outline)
 [![dsh plugin](https://img.shields.io/badge/dsh-plugin-4d6bfe)](https://github.com/deepseek-ai/DeepSeek-Harness)
