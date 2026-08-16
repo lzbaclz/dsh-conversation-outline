@@ -42,11 +42,11 @@ a flash highlight so you cannot miss it. Bilingual zh-CN / en.
 If you run DSH via `npx`, prefix the commands with `npx -p @deepseek-ai/dsh `.
 
 ```sh
-# 1) npm (recommended after publishing)
-dsh plugin --profile web add dsh-conversation-outline
-
-# 2) GitHub (unreleased / latest commit)
+# 1) GitHub (works right now — recommended)
 dsh plugin --profile web add github:lzbaclz/dsh-conversation-outline
+
+# 2) npm (available once the package is published to the npm registry)
+dsh plugin --profile web add dsh-conversation-outline
 
 # 3) from source (local development)
 git clone https://github.com/lzbaclz/dsh-conversation-outline.git
@@ -58,6 +58,8 @@ dsh plugin --profile web add "link:$(pwd)"
 > **Zero build scripts on the GitHub path**: the built `lib/` is committed to this repo
 > (`.gitignore` deliberately does not ignore it), so a `github:` install fetches
 > ready-to-load artifacts — no `prepare` script, no profile `allowBuilds` configuration.
+> If the npm command reports `package not found`, the package has not been published yet —
+> use the GitHub path above.
 
 **After installing**: restart the DSH Web service and refresh the page (`link:` installs
 just need a page refresh after `pnpm build`). Confirm with:

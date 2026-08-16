@@ -28,6 +28,15 @@ the right side too. If another plugin (e.g. an activity panel) occupies the same
 the panel may overlap it while open — close one of them, or open an issue describing
 the conflict so the panel anchor can be tuned.
 
+## `dsh plugin add dsh-conversation-outline` reports "package not found"
+
+The npm path only works **after the package is published to the npm registry**. Until
+then, install from GitHub instead:
+
+```sh
+dsh plugin --profile web add github:lzbaclz/dsh-conversation-outline
+```
+
 ## `dsh plugin add` fails on the GitHub path
 
 - The repo **commits `lib/`** — make sure you are not pointing at a fork that deleted

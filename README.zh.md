@@ -39,11 +39,11 @@
 通过 `npx` 运行 DSH 的话，给下面命令加上 `npx -p @deepseek-ai/dsh ` 前缀。
 
 ```sh
-# 1) npm（发布后推荐）
-dsh plugin --profile web add dsh-conversation-outline
-
-# 2) GitHub（未发布 / 最新提交）
+# 1) GitHub（现在就能装，推荐）
 dsh plugin --profile web add github:lzbaclz/dsh-conversation-outline
+
+# 2) npm（发布到 npm registry 之后可用）
+dsh plugin --profile web add dsh-conversation-outline
 
 # 3) 从源码（本地开发）
 git clone https://github.com/lzbaclz/dsh-conversation-outline.git
@@ -55,6 +55,7 @@ dsh plugin --profile web add "link:$(pwd)"
 > **GitHub 路径零构建脚本**：本仓库把构建产物 `lib/` 一并提交（`.gitignore` 故意不忽略），
 > `github:` 安装拿到的就是可直接加载的产物——不需要 `prepare` 脚本，也不需要 profile
 > 里的 `allowBuilds` 配置。
+> 如果 npm 命令报 `package not found`，说明包还没发布到 npm——请用上面的 GitHub 路径。
 
 **安装之后**：重启 DSH Web 服务并刷新页面（`link:` 安装只需在 `pnpm build` 后刷新）。
 确认插件在 profile 里：
