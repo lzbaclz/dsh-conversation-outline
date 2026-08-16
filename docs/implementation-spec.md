@@ -135,12 +135,18 @@ merge).
 - Locale: `ctx.locale.register(NS, { zh, en })` then `ctx.locale.bind(NS)` → `t(key)`.
 - Open a session: `ctx.sessions.open(id)`.
 
-### 1.6 Versions (match these in peerDependencies/devDependencies)
+### 1.6 Versions (peerDependencies / devDependencies)
 
-- `@deepseek-ai/cordis` 4.0.1 → peer `^4.0.1`
-- `@deepseek-ai/dsh-client-runtime` 0.1.0-rc.6 → peer `^0.1.0-rc.6`
-- `@deepseek-ai/dsh-client-ui-layout` 0.1.0-rc.6 → peer `^0.1.0-rc.6`
-- `react` / `react-dom` 18.3.1 (in profile flat dir) → peer `^18.2.0`
+- **peerDependencies: `react` `^18.2.0` ONLY.** The `@deepseek-ai/*` packages are
+  deliberately NOT peers (REVISED after the first install report): the registry's
+  `latest` tag for the client sub-packages is stale (`0.0.1-rc.1`) while `0.1.0-rc.6`
+  lives on `next`, so a `^0.1.0-rc.6` peer makes pnpm fail with
+  `ERR_PNPM_NO_MATCHING_VERSION` on a fresh profile. Nothing imports those packages at
+  runtime anyway — the browser module loader resolves platform modules from the
+  profile's own (channel-matched) installation, and the host half imports nothing.
+  `react-dom` is also dropped (unused since the shell.overlay rewrite).
+- Typechecking still links the local `@deepseek-ai/*` types via `scripts/link-types.mjs`
+  (dev-only symlinks, never shipped — see §1.7).
 - devDeps from public npm: `typescript@^5.9.3`, `tsdown@0.22.2`, `lightningcss@^1.33.0`,
   `@types/react@~18.3.1`, `@types/react-dom@^19.2.4`, `react@^18.2.0`,
   `react-dom@^18.2.0` (react needed as devDep for jsx types).
