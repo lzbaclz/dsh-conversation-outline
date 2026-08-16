@@ -52,9 +52,9 @@ Release 工作流、npm 发布（含命名冲突时的 scoped 兜底）、**GitH
       表示名字未被占用；被占用则走 scoped 兜底（见 §5.3）。
 - [ ] **`package.json` 完整**：`name` / `version` / `description` / `keywords` /
       `license` / `engines`（`^22.19.0 || >=24`）/ `files` 白名单 / `repository`（已回填）。
-- [ ] **`files` 白名单正确**：`["lib", "cordis.patch.yml", "README.md", "README.zh.md", "LICENSE"]`——
+- [ ] **`files` 白名单正确**：`["lib", "assets", "docs", "cordis.patch.yml", "README.md", "README.zh.md", "LICENSE"]`——
       `lib/` 是唯一产物目录，`cordis.patch.yml` 是 bundle patch，二者缺一不可；
-      中英两份 README 一并随包发布。
+      横幅图（assets）、导航文档（docs）与中英两份 README 一并随包发布。
 - [ ] **构建与校验全绿**：
 
       ```sh
@@ -203,7 +203,7 @@ jobs:
 ### 5.2 发布命令
 
 ```sh
-npm pack --dry-run   # 先看 files 白名单实际会打进哪些文件（应只有 lib/、patch、README、LICENSE）
+npm pack --dry-run   # 先看 files 白名单实际会打进哪些文件（应只有 lib/、assets、docs、patch、README、LICENSE）
 pnpm publish         # 触发 prepublishOnly: pnpm build && pnpm verify
 ```
 
