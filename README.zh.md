@@ -1,6 +1,6 @@
 # dsh-conversation-outline
 
-![banner](assets/banner.svg)
+![banner](assets/banner.png)
 
 [![npm](https://img.shields.io/npm/v/dsh-conversation-outline.svg)](https://www.npmjs.com/package/dsh-conversation-outline)
 [![npm downloads](https://img.shields.io/npm/dm/dsh-conversation-outline.svg)](https://www.npmjs.com/package/dsh-conversation-outline)

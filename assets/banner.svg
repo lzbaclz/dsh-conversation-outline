@@ -9,10 +9,6 @@
       <stop offset="0" stop-color="#8fa8ff"/>
       <stop offset="1" stop-color="#4d6bfe"/>
     </linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#4d6bfe"/>
-      <stop offset="1" stop-color="#6f8dff"/>
-    </linearGradient>
     <radialGradient id="glow" cx="0.75" cy="0.35" r="0.6">
       <stop offset="0" stop-color="#4d6bfe" stop-opacity="0.22"/>
       <stop offset="1" stop-color="#4d6bfe" stop-opacity="0"/>
@@ -34,77 +30,77 @@
     <circle cx="360" cy="330" r="1.6"/><circle cx="460" cy="330" r="1.6"/><circle cx="560" cy="330" r="1.6"/>
   </g>
 
-  <!-- left: chips -->
-  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif">
-    <rect x="56" y="62" rx="12" height="22" width="104" fill="#4d6bfe" opacity="0.16"/>
-    <circle cx="72" cy="73" r="3.4" fill="#6f8dff"/>
-    <text x="84" y="77" font-size="12" fill="#9db4ff" font-weight="600">DSH · Web Plugin</text>
+  <!-- left: chips (generous pill widths so no font metric can overflow) -->
+  <g font-family="'Helvetica Neue', Helvetica, Arial, sans-serif">
+    <rect x="56" y="60" rx="12" height="24" width="152" fill="#4d6bfe" opacity="0.16"/>
+    <circle cx="74" cy="72" r="3.4" fill="#6f8dff"/>
+    <text x="86" y="77" font-size="12.5" fill="#9db4ff" font-weight="600">DSH · Web Plugin</text>
 
-    <rect x="168" y="62" rx="12" height="22" width="70" fill="#ffffff" opacity="0.08"/>
-    <text x="184" y="77" font-size="12" fill="#b8c4e8">zh-CN / EN</text>
+    <rect x="224" y="60" rx="12" height="24" width="112" fill="#ffffff" opacity="0.08"/>
+    <text x="240" y="77" font-size="12.5" fill="#b8c4e8">zh-CN / EN</text>
 
-    <rect x="246" y="62" rx="12" height="22" width="52" fill="#2fbf8f" opacity="0.16"/>
-    <text x="262" y="77" font-size="12" fill="#5fd6ab" font-weight="600">MIT</text>
+    <rect x="352" y="60" rx="12" height="24" width="64" fill="#2fbf8f" opacity="0.16"/>
+    <text x="368" y="77" font-size="12.5" fill="#5fd6ab" font-weight="600">MIT</text>
 
     <!-- title -->
-    <text x="52" y="156" font-size="44" font-weight="800" fill="url(#title)" letter-spacing="-0.5">dsh-conversation-outline</text>
-    <text x="54" y="194" font-size="20" font-weight="600" fill="#dfe6ff">会话大纲 · Conversation Outline</text>
-    <text x="54" y="232" font-size="15" fill="#93a2cc">Find any question. Jump to any answer.</text>
-    <text x="54" y="256" font-size="15" fill="#6d7ba3">A Codex-style right-edge rail for DeepSeek Harness Web.</text>
+    <text x="52" y="158" font-size="38" font-weight="800" fill="url(#title)" letter-spacing="0">dsh-conversation-outline</text>
+    <text x="54" y="198" font-size="19" font-weight="600" fill="#dfe6ff">会话大纲 · Conversation Outline</text>
+    <text x="54" y="234" font-size="14.5" fill="#93a2cc">Find any question. Jump to any answer.</text>
+    <text x="54" y="258" font-size="14.5" fill="#6d7ba3">A Codex-style right-edge rail for DeepSeek Harness Web.</text>
   </g>
 
   <!-- right: app window illustration -->
-  <g transform="translate(700 34)">
+  <g transform="translate(716 34)">
     <!-- window frame -->
-    <rect x="0" y="0" width="540" height="292" rx="16" fill="#0d1428" stroke="#22315c" stroke-width="1.5"/>
-    <rect x="0" y="0" width="540" height="34" rx="16" fill="#101a34"/>
-    <rect x="0" y="18" width="540" height="16" fill="#101a34"/>
+    <rect x="0" y="0" width="516" height="292" rx="16" fill="#0d1428" stroke="#22315c" stroke-width="1.5"/>
+    <rect x="0" y="0" width="516" height="34" rx="16" fill="#101a34"/>
+    <rect x="0" y="18" width="516" height="16" fill="#101a34"/>
     <circle cx="22" cy="17" r="5" fill="#ff5f57"/>
     <circle cx="42" cy="17" r="5" fill="#febc2e"/>
     <circle cx="62" cy="17" r="5" fill="#28c840"/>
-    <rect x="150" y="10" width="240" height="14" rx="7" fill="#1b2a52"/>
+    <rect x="140" y="10" width="236" height="14" rx="7" fill="#1b2a52"/>
 
     <!-- chat bubbles -->
-    <rect x="34" y="58" width="200" height="30" rx="10" fill="#16224a"/>
-    <rect x="34" y="96" width="150" height="30" rx="10" fill="#16224a"/>
-    <rect x="34" y="134" width="220" height="30" rx="10" fill="#16224a"/>
+    <rect x="30" y="56" width="196" height="30" rx="10" fill="#16224a"/>
+    <rect x="30" y="94" width="146" height="30" rx="10" fill="#16224a"/>
+    <rect x="30" y="132" width="216" height="30" rx="10" fill="#16224a"/>
     <!-- assistant block -->
-    <rect x="34" y="182" width="330" height="16" rx="8" fill="#1d2b58"/>
-    <rect x="34" y="204" width="290" height="16" rx="8" fill="#1d2b58"/>
-    <rect x="34" y="226" width="310" height="16" rx="8" fill="#1d2b58"/>
+    <rect x="30" y="182" width="322" height="16" rx="8" fill="#1d2b58"/>
+    <rect x="30" y="204" width="282" height="16" rx="8" fill="#1d2b58"/>
+    <rect x="30" y="226" width="302" height="16" rx="8" fill="#1d2b58"/>
     <!-- highlighted (jump target) bubble with flash glow -->
-    <rect x="34" y="134" width="220" height="30" rx="10" fill="none" stroke="#6f8dff" stroke-width="2.4"/>
-    <rect x="30" y="130" width="228" height="38" rx="14" fill="none" stroke="#4d6bfe" stroke-opacity="0.35" stroke-width="6"/>
+    <rect x="30" y="132" width="216" height="30" rx="10" fill="none" stroke="#6f8dff" stroke-width="2.4"/>
+    <rect x="26" y="128" width="224" height="38" rx="14" fill="none" stroke="#4d6bfe" stroke-opacity="0.35" stroke-width="6"/>
 
     <!-- hover panel -->
-    <rect x="296" y="52" width="212" height="200" rx="12" fill="#111a38" stroke="#26386e" stroke-width="1.4"/>
-    <rect x="308" y="64" width="188" height="14" rx="7" fill="#8fa8ff"/>
-    <rect x="308" y="88" width="188" height="22" rx="8" fill="#182650" stroke="#233368" stroke-width="1"/>
-    <circle cx="320" cy="99" r="4" fill="#4d6bfe"/>
-    <rect x="330" y="94" width="110" height="10" rx="5" fill="#2c3f7c"/>
+    <rect x="272" y="52" width="212" height="200" rx="12" fill="#111a38" stroke="#26386e" stroke-width="1.4"/>
+    <rect x="284" y="64" width="188" height="14" rx="7" fill="#8fa8ff"/>
+    <rect x="284" y="88" width="188" height="22" rx="8" fill="#182650" stroke="#233368" stroke-width="1"/>
+    <circle cx="296" cy="99" r="4" fill="#4d6bfe"/>
+    <rect x="306" y="94" width="110" height="10" rx="5" fill="#2c3f7c"/>
     <!-- panel rows -->
-    <rect x="308" y="120" width="188" height="26" rx="8" fill="#0e1836"/>
-    <rect x="318" y="128" width="24" height="10" rx="5" fill="#4d6bfe"/>
-    <rect x="350" y="128" width="120" height="10" rx="5" fill="#31447f"/>
-    <rect x="308" y="152" width="188" height="26" rx="8" fill="#0e1836"/>
-    <rect x="318" y="160" width="24" height="10" rx="5" fill="#4d6bfe"/>
-    <rect x="350" y="160" width="96" height="10" rx="5" fill="#31447f"/>
-    <rect x="308" y="184" width="188" height="26" rx="8" fill="#0e1836"/>
-    <rect x="318" y="192" width="24" height="10" rx="5" fill="#4d6bfe"/>
-    <rect x="350" y="192" width="140" height="10" rx="5" fill="#31447f"/>
-    <rect x="308" y="220" width="188" height="20" rx="8" fill="#0e1836"/>
-    <rect x="318" y="226" width="140" height="8" rx="4" fill="#22315c"/>
+    <rect x="284" y="120" width="188" height="26" rx="8" fill="#0e1836"/>
+    <rect x="294" y="128" width="24" height="10" rx="5" fill="#4d6bfe"/>
+    <rect x="326" y="128" width="120" height="10" rx="5" fill="#31447f"/>
+    <rect x="284" y="152" width="188" height="26" rx="8" fill="#0e1836"/>
+    <rect x="294" y="160" width="24" height="10" rx="5" fill="#4d6bfe"/>
+    <rect x="326" y="160" width="96" height="10" rx="5" fill="#31447f"/>
+    <rect x="284" y="184" width="188" height="26" rx="8" fill="#0e1836"/>
+    <rect x="294" y="192" width="24" height="10" rx="5" fill="#4d6bfe"/>
+    <rect x="326" y="192" width="140" height="10" rx="5" fill="#31447f"/>
+    <rect x="284" y="220" width="188" height="20" rx="8" fill="#0e1836"/>
+    <rect x="294" y="226" width="140" height="8" rx="4" fill="#22315c"/>
 
     <!-- right-edge rail -->
-    <rect x="516" y="70" width="12" height="160" rx="6" fill="#0a0f20" stroke="#22315c" stroke-width="1"/>
-    <rect x="518" y="76" width="8" height="6" rx="3" fill="#2c3f7c"/>
-    <rect x="518" y="86" width="8" height="6" rx="3" fill="#2c3f7c"/>
-    <rect x="518" y="96" width="8" height="6" rx="3" fill="#6f8dff"/>
-    <rect x="518" y="106" width="8" height="6" rx="3" fill="#2c3f7c"/>
-    <rect x="518" y="116" width="8" height="6" rx="3" fill="#2c3f7c"/>
-    <rect x="518" y="126" width="8" height="6" rx="3" fill="#2c3f7c"/>
-    <rect x="518" y="136" width="8" height="6" rx="3" fill="#2c3f7c"/>
-    <rect x="518" y="146" width="8" height="6" rx="3" fill="#2c3f7c"/>
-    <rect x="518" y="156" width="8" height="6" rx="3" fill="#2c3f7c"/>
+    <rect x="492" y="70" width="12" height="160" rx="6" fill="#0a0f20" stroke="#22315c" stroke-width="1"/>
+    <rect x="494" y="76" width="8" height="6" rx="3" fill="#2c3f7c"/>
+    <rect x="494" y="86" width="8" height="6" rx="3" fill="#2c3f7c"/>
+    <rect x="494" y="96" width="8" height="6" rx="3" fill="#6f8dff"/>
+    <rect x="494" y="106" width="8" height="6" rx="3" fill="#2c3f7c"/>
+    <rect x="494" y="116" width="8" height="6" rx="3" fill="#2c3f7c"/>
+    <rect x="494" y="126" width="8" height="6" rx="3" fill="#2c3f7c"/>
+    <rect x="494" y="136" width="8" height="6" rx="3" fill="#2c3f7c"/>
+    <rect x="494" y="146" width="8" height="6" rx="3" fill="#2c3f7c"/>
+    <rect x="494" y="156" width="8" height="6" rx="3" fill="#2c3f7c"/>
   </g>
 </svg>
