@@ -3,132 +3,156 @@
 [![npm](https://img.shields.io/npm/v/dsh-conversation-outline.svg)](https://www.npmjs.com/package/dsh-conversation-outline)
 [![license](https://img.shields.io/npm/l/dsh-conversation-outline.svg)](LICENSE)
 
-DeepSeek Harness 的「会话大纲」客户端插件：在 Web GUI **右侧提供一条常驻细竖条（会话 minimap）**，
-每个问题对应一根小横条；**鼠标悬停后展开预览面板**，列出每个问题开头的几个字（超出省略），支持
-**搜索**、**加载更早**与**点击跳转**（切到 Chat 视图 → 滚动定位 → 高亮闪烁）。界面中英双语
-（zh-CN / en），跟随 DSH 界面语言。
+English | [中文](README.zh.md)
 
-A Codex-style conversation outline for DeepSeek Harness: a slim always-visible
-right-edge rail (one bar per question), expanding on hover into a preview panel
-of question openings, with search, load-older and click-to-jump. Bilingual
-zh-CN / en.
+A Codex-style **conversation outline** client plugin for [DeepSeek Harness](https://github.com/deepseek-ai/DeepSeek-Harness) (DSH) Web:
+a slim, always-visible **right-edge rail** (one small bar per question — a conversation minimap)
+that **expands on hover into a preview panel** listing the opening words of every user
+question, with search, load-older and **click-to-jump** (switch to the Chat view → scroll to
+the message → flash highlight). The UI is bilingual (zh-CN / en) and follows the DSH
+interface language.
 
-## 特性 / Features
+## Features
 
-- **右侧细条（Rail）**：会话右侧常驻一条窄窄的竖条，每个问题一根小横条（minimap），
-  平时不占地方、不影响阅读；超过 60 个问题时折叠为顶部 `+N` 标记。
-- **悬停展开（Hover panel）**：鼠标移到细条上，右侧滑出预览面板——每个问题显示开头几个字
-  （单行截断）、`#轮次` 徽标与 `HH:MM` 时间；鼠标移开自动收起（240ms 缓冲），触屏设备点击
-  细条可固定面板，`Esc` 关闭。
-- **点击跳转**：点击细条上的小横条或面板里的任意一行 → 切到 Chat 视图 → 滚动到对应消息 →
-  1.8s 高亮闪烁（尊重 `prefers-reduced-motion`）。
-- **搜索**：面板顶部搜索框，大小写不敏感的子串过滤。
-- **加载更早**：面板底部 `加载更早 / Load older` 按钮，调用会话 `loadOlder()` 分页翻历史。
-- **实时更新**：会话进行中，新问题自动出现（订阅会话快照）。
-- **会话隔离**：跟随当前会话；切换会话时面板自动收起、细条按新会话重算。
-- **双语 i18n**：zh-CN / en，随 DSH 界面语言切换。
+- **Right-edge rail (minimap)** — a thin strip pinned to the right edge, one bar per user
+  question in chronological order. Out of the way while you read; questions beyond 60 fold
+  into a top `+N` marker.
+- **Hover-expanded preview panel** — hover the rail and a panel slides out showing each
+  question's opening words (single-line truncated), its `#turn` badge and `HH:MM` time.
+  Moving the pointer away collapses it after a 240 ms grace period; on touch devices tap
+  the strip to pin the panel, `Esc` or × closes it. The panel is a pure overlay — it never
+  shifts your content.
+- **Click-to-jump** — click a bar on the rail or a row in the panel: DSH switches to the
+  Chat view, scrolls to that message and flashes it for 1.8 s (respects
+  `prefers-reduced-motion`).
+- **Search** — case-insensitive substring filter over the flattened question text.
+- **Load older** — paging through older history via the session's `loadOlder()`.
+- **Live updates** — new questions appear while the session is running (snapshot subscription).
+- **Session isolation** — follows the current session; switching sessions collapses the
+  panel and rebuilds the rail for the new session.
+- **Bilingual i18n** — zh-CN / en, switching with the DSH interface language.
 
-## 界面预览 / Preview
+## Preview
 
-> TODO：截图占位 — 发布前在 `assets/ui.png` 放一张面板截图并替换下方图片链接。
+> TODO: placeholder — drop a screenshot at `assets/ui.png` before the release and update
+> the image link below.
 
-![会话大纲面板](assets/ui.png)
+![Conversation outline panel](assets/ui.png)
 
-## 安装 / Install
+## Install
 
-**前置要求**：已安装 [DeepSeek Harness](https://github.com/deepseek-ai/DeepSeek-Harness)
-（`dsh` 命令可用）；Node.js `^22.19` 或 `>=24`；pnpm 10+。
+**Prerequisites**: [DeepSeek Harness](https://github.com/deepseek-ai/DeepSeek-Harness)
+installed (the `dsh` command available); Node.js `^22.19` or `>=24`; pnpm 10+.
 
-### 1. 从 npm（发布后，推荐）
+> If you run DSH through `npx` instead of a global install, prefix the commands below
+> with `npx -p @deepseek-ai/dsh `.
+
+### 1. From npm (recommended after publishing)
 
 ```sh
-npx -p @deepseek-ai/dsh dsh plugin --profile web add dsh-conversation-outline
+dsh plugin --profile web add dsh-conversation-outline
 ```
 
-### 2. 从 GitHub（未发布 / 用最新提交）
+### 2. From GitHub (unreleased / latest commit)
 
 ```sh
-npx -p @deepseek-ai/dsh dsh plugin --profile web add github:<owner>/dsh-conversation-outline
+dsh plugin --profile web add github:lzbaclz/dsh-conversation-outline
 ```
 
-> **无需构建脚本**：本仓库把构建产物 `lib/` 一并提交进 Git（`.gitignore` 不忽略 `lib`），
-> 因此 GitHub 安装拿到的就是可直接加载的产物，不需要 `prepare` 构建脚本，也不需要
-> 在 profile 里配置 `allowBuilds`——安装即用，零交互。
+> **Zero build scripts**: this repository commits the built output `lib/` to git
+> (`.gitignore` deliberately does not ignore `lib`), so a GitHub install fetches
+> ready-to-load artifacts — no `prepare` script and no profile `allowBuilds`
+> configuration. Install-and-go, zero interaction.
 
-### 3. 从源码（本地开发）
+### 3. From source (local development)
 
 ```sh
-git clone <your-repo-url> dsh-conversation-outline
+git clone https://github.com/lzbaclz/dsh-conversation-outline.git
 cd dsh-conversation-outline
 pnpm install
-pnpm dev:types     # 把 @deepseek-ai 类型符号链接进 node_modules（一次性）
+pnpm dev:types    # symlink @deepseek-ai type packages into node_modules (one-time)
 pnpm build
 dsh plugin --profile web add "link:$(pwd)"
 ```
 
-> **重启生效**：安装 / 升级 / host 侧改动后，重启正在运行的 DeepSeek Harness Web 服务并刷新页面。
+### After installing
 
-装好后用以下命令确认插件在 profile 里：
+> **Restart to apply**: after install / upgrade / any host-side change, restart the
+> running DeepSeek Harness Web service and refresh the page. (A `link:` install picks up
+> rebuilt `lib/` without re-adding — refresh the page after `pnpm build`.)
+
+Confirm the plugin is in the profile:
 
 ```sh
 dsh plugin --profile web list
 ```
 
-## 使用 / Usage
+Upgrade with the same `add` command (optionally pin a version, e.g.
+`dsh-conversation-outline@0.1.0`).
 
-安装并重启后，会话右侧出现一条细竖条（当前会话的「问题 minimap」）：
+## Usage
 
-1. **悬停展开**：鼠标移到细条上，右侧滑出预览面板（每个问题开头几个字 + `#轮次` + 时间）；
-   鼠标移开自动收起。触屏设备点击细条可固定面板，`Esc` 或 × 关闭。
-2. **跳转**：点击细条上的小横条或面板里的任意问题行——DSH 切到 Chat 视图，滚动到那条消息
-   并闪烁高亮。
-3. **搜索**：在面板顶部搜索框输入关键字，列表即时过滤。
-4. **翻历史**：点击底部 `加载更早 / Load older` 加载更早的问题（按钮在加载中置灰）。
-5. **复制**：鼠标移到某行，点复制按钮即可拷贝该问题全文。
+After install and restart, a thin vertical strip appears on the right edge of a session
+(the conversation's question minimap):
 
-## 开发 / Development
+1. **Hover to expand** — move the pointer onto the strip: a preview panel slides out
+   (each question's opening words + `#turn` + time). It collapses automatically after
+   you move away; on touch devices tap the strip to pin it, `Esc` or × to close.
+2. **Jump** — click a bar on the strip or any row in the panel: DSH switches to the Chat
+   view, scrolls to the message and flashes it.
+3. **Search** — type in the panel's search box to filter the list instantly.
+4. **Load older** — the `Load older` button at the bottom pages through earlier questions
+   (greyed out while loading).
+5. **Copy** — hover a row and click the copy button to copy the full question text.
+
+## Development
 
 ```sh
-pnpm dev:types   # 符号链接 @deepseek-ai 类型（首次 / node_modules 重建后）
+pnpm dev:types   # symlink @deepseek-ai types (first time / after rebuilding node_modules)
 pnpm install
-pnpm typecheck   # host + client 双 tsc program 类型检查
-pnpm build       # tsc(host) → tsc(client) → tsdown 打包 lib/client.js
-pnpm verify      # 离线冒烟：manifest/exports/patch/产物形状 + 纯逻辑断言
+pnpm typecheck   # host + client dual tsc programs
+pnpm build       # tsc(host) → tsc(client) → tsdown bundles lib/client.js
+pnpm verify      # offline smoke: manifest/exports/patch/bundle shape + pure-logic assertions
 ```
 
-### 本地调试
+### Local debugging
 
-1. 用一个**独立的 scratch profile**（不要动正在运行的实例）。关键：新 scratch profile
-   的 bundles 里只有 `@deepseek-ai/dsh-base`，**必须再手动补上官方 web-app bundle**，
-   否则 Web 启动会一直挂起：
+1. Use a **scratch profile** (never touch the running instance). Important: a fresh
+   scratch profile bundles only `@deepseek-ai/dsh-base` — you must **also add the official
+   web-app bundle by path**, otherwise the web boot hangs forever. Locate the
+   `@deepseek-ai/dsh-web-app` folder inside YOUR dsh installation (it ships with the CLI;
+   e.g. `~/.npm/_npx/*/node_modules/@deepseek-ai/dsh-web-app` for npx runs, or
+   `<npm root -g>/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-web-app` for a global
+   install). Do NOT add it by name: the public registry only carries the old
+   `0.0.1-rc.1` channel, which mismatches a `0.1.0-rc.x` CLI and fails the boot.
 
    ```sh
-   tmp=$(mktemp -d)   # 独立临时 DSH_HOME，用完即弃
-   # 1) 安装插件本身（路径安装）
-   DSH_HOME=$tmp npx -p @deepseek-ai/dsh dsh plugin --profile scratch add "$(pwd)"
-   # 2) 关键步骤：补官方 web-app bundle（缺失时 scratch Web 启动挂起）
-   DSH_HOME=$tmp npx -p @deepseek-ai/dsh dsh plugin --profile scratch add \
-     /Users/liziqing/.npm/_npx/1e7f6d9597241db0/node_modules/@deepseek-ai/dsh-web-app
-   # 3) 在空闲端口启动（避开已占用的 3080 等）
-   DSH_HOME=$tmp npx -p @deepseek-ai/dsh dsh --profile scratch --port 3199
-   # 4) 验证完：在另一个终端 kill 掉该 dsh 进程，再 rm -rf "$tmp" 清理临时目录
+   tmp=$(mktemp -d)   # throwaway DSH_HOME
+   # 1) install the plugin itself (path install)
+   DSH_HOME=$tmp dsh plugin --profile scratch add "$(pwd)"
+   # 2) critical: add the official web-app bundle by path (web boot hangs without it)
+   DSH_HOME=$tmp dsh plugin --profile scratch add "<path-to>/@deepseek-ai/dsh-web-app"
+   # 3) boot on a free port (avoid occupied ones such as 3080)
+   DSH_HOME=$tmp dsh --profile scratch --port 3199
+   # 4) when done: kill the dsh process, then rm -rf "$tmp"
    ```
 
-2. **客户端改动 + HMR**：`pnpm exec tsdown --watch` 持续重写 `lib/client.js`；
-   若同时在 DSH checkout 里跑着 `pnpm run dev:web`，浏览器端会免刷新热更新；
-   否则普通 `pnpm build` 后刷新现有 DSH 页面即可（不要另起 Vite server——
-   Web shell 依赖 host 注入的 `window.__DSH_BOOT__`）。
-3. **host 侧 / manifest 改动**：`src/index.ts`、`package.json`、`exports`、
-   `cordis.patch.yml` 的变化需要重启 DSH 服务；manifest 级改动需重新执行
-   `dsh plugin add`。
+2. **Client changes + HMR**: `pnpm exec tsdown --watch` keeps rewriting `lib/client.js`.
+   With the DSH checkout's `pnpm run dev:web` watcher running, the browser hot-reloads
+   without a refresh; otherwise run a plain `pnpm build` and refresh the existing DSH page
+   (do NOT start a separate Vite server — the Web shell relies on the host-injected
+   `window.__DSH_BOOT__`).
+3. **Host-side / manifest changes**: edits to `src/index.ts`, `package.json`, `exports`
+   or `cordis.patch.yml` require a DSH service restart; manifest-level changes require
+   re-running `dsh plugin add`.
 
-## 文档 / Docs
+## Docs
 
-| 文档 | 内容 |
+| Document | Contents |
 |---|---|
-| [docs/implementation-spec.md](docs/implementation-spec.md) | 权威设计规格：DSH 事实、UI 接缝、跳转算法、验证计划 |
-| [docs/publishing-guide.md](docs/publishing-guide.md) | 发布指南：许可证、GitHub 仓库、npm/GitHub 分发、发布流程 |
+| [docs/implementation-spec.md](docs/implementation-spec.md) | Authoritative design spec: DSH facts, UI seams, jump algorithm, verification plan |
+| [docs/publishing-guide.md](docs/publishing-guide.md) | Publishing guide: license choice, GitHub repo, npm/GitHub distribution, release workflow |
 
 ## License
 
-MIT — 见 [LICENSE](LICENSE)。
+MIT — see [LICENSE](LICENSE).

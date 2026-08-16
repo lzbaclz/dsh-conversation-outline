@@ -52,8 +52,9 @@ Release 工作流、npm 发布（含命名冲突时的 scoped 兜底）、**GitH
       表示名字未被占用；被占用则走 scoped 兜底（见 §5.3）。
 - [ ] **`package.json` 完整**：`name` / `version` / `description` / `keywords` /
       `license` / `engines`（`^22.19.0 || >=24`）/ `files` 白名单 / `repository`（已回填）。
-- [ ] **`files` 白名单正确**：`["lib", "cordis.patch.yml", "README.md", "LICENSE"]`——
-      `lib/` 是唯一产物目录，`cordis.patch.yml` 是 bundle patch，二者缺一不可。
+- [ ] **`files` 白名单正确**：`["lib", "cordis.patch.yml", "README.md", "README.zh.md", "LICENSE"]`——
+      `lib/` 是唯一产物目录，`cordis.patch.yml` 是 bundle patch，二者缺一不可；
+      中英两份 README 一并随包发布。
 - [ ] **构建与校验全绿**：
 
       ```sh
@@ -62,9 +63,10 @@ Release 工作流、npm 发布（含命名冲突时的 scoped 兜底）、**GitH
       pnpm verify      # 离线冒烟（manifest/exports/patch/产物形状 + 纯逻辑）
       ```
 
-- [ ] **README 与实际分发形态一致**（skill §9）：安装命令与即将发布的方式匹配——
-      若先走 GitHub 分发，README 的推荐命令应为 `github:<owner>/dsh-conversation-outline`；
-      npm 发布后再换成 npm 包名。
+- [ ] **README 与实际分发形态一致**（skill §9）：README.md（英文）+ README.zh.md（中文）
+      互相链接、内容一致；安装命令与即将发布的方式匹配——若先走 GitHub 分发，
+      README 的推荐命令应为 `github:<owner>/dsh-conversation-outline`；
+      npm 发布后再把推荐命令换成 npm 包名（两份 README 同步改）。
 - [ ] **`lib/` 产物是最新且已提交**（本仓库策略，见 §6.2）——GitHub 安装拿到的就是
       仓库里的 `lib/`，发 tag 前必须确认与源码同步。
 - [ ] **LICENSE 版权人已替换**（§1.3）。
