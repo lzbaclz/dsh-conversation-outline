@@ -103,7 +103,6 @@ need a service restart. Scratch-profile testing recipe:
 
 Issues are welcome any time: [open one](https://github.com/lzbaclz/dsh-conversation-outline/issues).
 Questions, feature ideas, screenshots of what you built with it — all good.
-Find me on X: [@lzbaclz](https://x.com/lzbaclz) · 国内社区：DeepSeek Harness 相关讨论组。
 
 ## License
 

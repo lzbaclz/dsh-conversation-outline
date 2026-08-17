@@ -95,7 +95,6 @@ HMR 链（或简单刷新页面）即可生效。host / manifest 改动需要重
 
 随时欢迎提 issue：[点这里](https://github.com/lzbaclz/dsh-conversation-outline/issues)。
 问题、点子、你用这个插件做了什么、截图——都欢迎。
-X：[@lzbaclz](https://x.com/lzbaclz) · 国内社区：DeepSeek Harness 相关讨论组。
 
 ## License
 
