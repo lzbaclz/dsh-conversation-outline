@@ -11,12 +11,20 @@ import { defineConfig } from 'tsdown'
  * Everything except the platform module table is inlined; `clean: false` so the
  * host tsc output in lib/ is never wiped.
  */
+/**
+ * Platform module table of the browser loader (DSH 0.1.5-rc.2). Extracted from
+ * the shipped client bundles' `require(...)` calls: the 0.1.5 line replaced
+ * `dsh-client-runtime/client` with `dsh-client-store`, dropped
+ * `dsh-client-ui-attachment`, and added `dsh-api-gateway/client` plus
+ * `dsh-client-ui-dockkit`.
+ */
 const PLATFORM_EXTERNALS = [
   '@deepseek-ai/cordis',
-  '@deepseek-ai/dsh-client-runtime/client',
+  '@deepseek-ai/dsh-client-store',
   '@deepseek-ai/dsh-client-ui-slots',
   '@deepseek-ai/dsh-client-ui-primitives',
-  '@deepseek-ai/dsh-client-ui-attachment',
+  '@deepseek-ai/dsh-client-ui-dockkit',
+  '@deepseek-ai/dsh-api-gateway/client',
   'react',
   'react/jsx-runtime',
   'react-dom',

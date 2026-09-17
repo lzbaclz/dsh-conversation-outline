@@ -58,7 +58,7 @@ dsh plugin --profile web add @chestnut23/dsh-conversation-outline
 # 3) from source (local development)
 git clone https://github.com/lzbaclz/dsh-conversation-outline.git
 cd dsh-conversation-outline
-pnpm install && pnpm dev:types && pnpm build
+pnpm install && pnpm build
 dsh plugin --profile web add "link:$(pwd)"
 ```
 
@@ -98,7 +98,7 @@ showing up? [Troubleshooting](docs/troubleshooting.md).
 ## Development
 
 ```sh
-pnpm dev:types   # symlink @deepseek-ai type packages (one-time)
+pnpm install     # installs the pinned @deepseek-ai 0.1.5-rc.2 type packages
 pnpm typecheck   # host + client dual tsc programs
 pnpm build       # tsc(host) → tsc(client) → tsdown bundles lib/client.js
 pnpm verify      # offline smoke: manifest/exports/patch/bundle shape + pure-logic asserts

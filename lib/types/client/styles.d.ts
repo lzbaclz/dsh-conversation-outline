@@ -1,4 +1,4 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client';
+import type { Context as ClientContext } from '@deepseek-ai/cordis';
 /**
  * Outline rail + hover panel CSS (implementation-spec §1.8/§2.1, revised):
  * a thin right-edge rail (conversation minimap) that is always visible while

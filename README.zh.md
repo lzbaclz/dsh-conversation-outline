@@ -54,7 +54,7 @@ dsh plugin --profile web add @chestnut23/dsh-conversation-outline
 # 3) 从源码（本地开发）
 git clone https://github.com/lzbaclz/dsh-conversation-outline.git
 cd dsh-conversation-outline
-pnpm install && pnpm dev:types && pnpm build
+pnpm install && pnpm build
 dsh plugin --profile web add "link:$(pwd)"
 ```
 
@@ -89,7 +89,7 @@ dsh plugin --profile web list
 ## 开发
 
 ```sh
-pnpm dev:types   # 符号链接 @deepseek-ai 类型（一次性）
+pnpm install     # 安装钉死版本的 @deepseek-ai 0.1.5-rc.2 类型包
 pnpm typecheck   # host + client 双 tsc program
 pnpm build       # tsc(host) → tsc(client) → tsdown 打包 lib/client.js
 pnpm verify      # 离线冒烟：manifest/exports/patch/产物形状 + 纯逻辑断言

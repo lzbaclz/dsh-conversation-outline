@@ -1,4 +1,4 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client';
+import type { Context as ClientContext } from '@deepseek-ai/cordis';
 /**
  * Client entry (implementation-spec §1.1/§2.4): the browser half of the
  * plugin. Cordis services this fiber waits for before apply() runs.

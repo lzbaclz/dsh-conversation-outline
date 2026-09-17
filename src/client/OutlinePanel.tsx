@@ -7,8 +7,8 @@ import {
   useSyncExternalStore,
 } from 'react'
 import type { ReactElement } from 'react'
-import type { GlobalStandardProps, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
-import type { ISessions } from '@deepseek-ai/dsh-client-runtime/client'
+import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
+import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
 import { NS } from './locales.ts'
 import {
   collectQuestions,
@@ -27,11 +27,12 @@ import type { OutlineSnapshotLike } from './outline.ts'
  * clicking a row jumps to that message.
  *
  * Rendered by the shell as a `shell.overlay` entry (frame-wide, click-through
- * layer). Props come from the composed contract — the global standard kit
- * (`useSessions`) and the typed `t` seat for our locale namespace — plus the
- * Chat feed the registration resolves per session (see §data sources).
+ * layer). Props come from the composed contract — the injected sessions service
+ * face and the typed `t` seat for our locale namespace. The current session is
+ * read from `sessions.list` directly (the 0.1.5-rc.2 standard kit exposes the
+ * same feed as `ISessions.list`), so the component needs no `useSessions` prop.
  */
-export interface OutlinePanelProps extends GlobalStandardProps {
+export interface OutlinePanelProps {
   /**
    * The sessions service face, injected by the registration: resolves the
    * binding (its `.session` face carries pagination) and, through its context,
@@ -70,10 +71,13 @@ const NO_FLOW: OutlineSnapshotLike = { order: [] }
  * service yields `undefined`, and the rail then renders nothing instead of
  * crashing the slot.
  */
-export function resolveChatFeed(
-  binding: { ctx?: { uiConversation?: unknown } } | undefined,
-): OutlineChatFeed | undefined {
-  const uiConversation = binding?.ctx?.uiConversation as
+export function resolveChatFeed(binding: unknown): OutlineChatFeed | undefined {
+  // Structural lookup on purpose: the binding's context face is a cordis
+  // Context in 0.1.5-rc.2 (`AgentContext`), whose `uiConversation` slot the
+  // service tracker only exposes at runtime, so a structural read is the
+  // portable way to reach it without value-importing another plugin.
+  const uiConversation = (binding as { ctx?: { uiConversation?: unknown } } | undefined)
+    ?.ctx?.uiConversation as
     | {
         binding?: (source: unknown) => {
           target?: (name: string) => OutlineChatFeed | undefined
@@ -133,10 +137,17 @@ function scheduleTimeout(
 
 export function OutlinePanel({
   sessions,
-  useSessions,
   t,
 }: OutlinePanelProps): ReactElement | null {
-  const current = useSessions((s) => s.current)
+  // Current-session feed: the sessions service owns it (`ISessions.list`), so
+  // subscribe to it here instead of taking a `useSessions` standard-kit prop —
+  // 0.1.5-rc.2 removed that hook from `GlobalStandardProps`.
+  const listSubscribe = useCallback(
+    (onChange: () => void) => sessions.list.subscribe(onChange),
+    [sessions],
+  )
+  const listSnapshot = useCallback(() => sessions.list.getSnapshot(), [sessions])
+  const current = useSyncExternalStore(listSubscribe, listSnapshot).current
   // One binding per session, shared by the session face and the Chat feed: the
   // binding is the identity `uiConversation.binding()` caches its per-session
   // target on, so both must be resolved from the same object.

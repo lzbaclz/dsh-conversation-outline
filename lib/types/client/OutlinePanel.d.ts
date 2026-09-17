@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
-import type { GlobalStandardProps, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots';
-import type { ISessions } from '@deepseek-ai/dsh-client-runtime/client';
+import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots';
+import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client';
 import { NS } from './locales.ts';
 import type { OutlineSnapshotLike } from './outline.ts';
 /**
@@ -12,11 +12,12 @@ import type { OutlineSnapshotLike } from './outline.ts';
  * clicking a row jumps to that message.
  *
  * Rendered by the shell as a `shell.overlay` entry (frame-wide, click-through
- * layer). Props come from the composed contract — the global standard kit
- * (`useSessions`) and the typed `t` seat for our locale namespace — plus the
- * Chat feed the registration resolves per session (see §data sources).
+ * layer). Props come from the composed contract — the injected sessions service
+ * face and the typed `t` seat for our locale namespace. The current session is
+ * read from `sessions.list` directly (the 0.1.5-rc.2 standard kit exposes the
+ * same feed as `ISessions.list`), so the component needs no `useSessions` prop.
  */
-export interface OutlinePanelProps extends GlobalStandardProps {
+export interface OutlinePanelProps {
     /**
      * The sessions service face, injected by the registration: resolves the
      * binding (its `.session` face carries pagination) and, through its context,
@@ -46,9 +47,5 @@ export interface OutlineChatFeed {
  * service yields `undefined`, and the rail then renders nothing instead of
  * crashing the slot.
  */
-export declare function resolveChatFeed(binding: {
-    ctx?: {
-        uiConversation?: unknown;
-    };
-} | undefined): OutlineChatFeed | undefined;
-export declare function OutlinePanel({ sessions, useSessions, t, }: OutlinePanelProps): ReactElement | null;
+export declare function resolveChatFeed(binding: unknown): OutlineChatFeed | undefined;
+export declare function OutlinePanel({ sessions, t, }: OutlinePanelProps): ReactElement | null;

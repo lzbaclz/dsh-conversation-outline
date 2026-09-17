@@ -1,9 +1,14 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 // Type-only module loads so their declaration merges apply in this program:
-// the locale Context service (ctx.locale) and the layout's `shell.overlay`
-// SlotMap entry. Both are erased at compile time (purity gate).
+// - locale contributes `ctx.locale`;
+// - the layout declares the `shell.overlay` SlotMap entry;
+// - ui-renderer (0.1.5-rc.2 moved the slot service here) contributes `ctx.slots`;
+// - the sessions controller contributes `ctx.sessions`.
+// All are erased at compile time (purity gate).
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
+import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
+import type {} from '@deepseek-ai/dsh-api-session-controller/client'
 import { OutlinePanel } from './OutlinePanel.tsx'
 import { NS, dictionaries } from './locales.ts'
 import { injectStyle } from './styles.ts'
