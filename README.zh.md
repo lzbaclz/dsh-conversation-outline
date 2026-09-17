@@ -101,6 +101,7 @@ pnpm install     # 安装钉死版本的 @deepseek-ai 0.1.5-rc.2 类型包
 pnpm typecheck   # host + client 双 tsc program
 pnpm build       # tsc(host) → tsc(client) → tsdown 打包 lib/client.js
 pnpm verify      # 离线冒烟：manifest/exports/patch/产物形状 + 纯逻辑断言
+pnpm test:dom    # 无头 DOM 测试：jsdom 里挂载真实组件，断言细条渲染/悬停/点击跳转
 ```
 
 类型面由 **devDependencies 里钉死版本的 `@deepseek-ai/*` 0.1.5-rc.2 包**提供（npm 上有

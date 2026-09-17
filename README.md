@@ -126,6 +126,7 @@ pnpm install     # installs the pinned @deepseek-ai 0.1.5-rc.2 type packages
 pnpm typecheck   # host + client dual tsc programs
 pnpm build       # tsc(host) → tsc(client) → tsdown bundles lib/client.js
 pnpm verify      # offline smoke: manifest/exports/patch/bundle shape + pure-logic asserts
+pnpm test:dom    # headless DOM test: mounts the built rail in jsdom and asserts render/hover/jump
 ```
 
 `pnpm typecheck` needs `lib/types/**` from the `@deepseek-ai/*` packages. Some DSH
