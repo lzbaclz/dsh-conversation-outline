@@ -1,0 +1,32 @@
+# Type-check, build and exercise both test layers on every push and pull request.
+# The DOM smoke test mounts the built plugin in jsdom, so a regression in the
+# platform contract the plugin depends on fails here instead of in a browser.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Type-check
+        run: pnpm typecheck
+      - name: Build
+        run: pnpm build
+      - name: Offline verify
+        run: pnpm verify
+      - name: DOM smoke test
+        run: pnpm test:dom

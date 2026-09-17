@@ -45,7 +45,7 @@
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.client.json && tsdown",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit",
     "verify": "node scripts/verify.mjs",
-    "prepublishOnly": "pnpm build && pnpm verify",
+    "prepublishOnly": "pnpm build && pnpm verify && pnpm test:dom",
     "test:dom": "node scripts/dom-smoke.mjs"
   },
   "peerDependencies": {
