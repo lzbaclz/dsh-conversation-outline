@@ -19,8 +19,21 @@ A thin vertical strip appears on the right edge, vertically centered:
   time. Mid-turn steering messages carry a `追问` / `steer` tag.
 - Move the pointer away: the panel collapses after a 240 ms grace period (the grace
   lets the pointer travel from the rail into the panel without flicker).
-- **Touch devices**: tap the strip (between bars) to pin/unpin the panel; `Esc` or the
-  × button closes it.
+
+## Open by click (no hover required)
+
+Click the rail itself — its padding, its background, or the `+N` marker — and the panel
+opens **pinned**: it stays up until it is closed, so the strip is fully usable by click
+alone (touch, pen, automation, or a pointer that never raised a hover event).
+
+- Clicking a bar both opens the panel and jumps to that question's message; the panel
+  closes again once the message is on screen.
+- A pinned panel keeps a highlighted border, so "pinned" and "hover preview" look
+  different.
+- Closing it: `Esc`, the × button, a click anywhere outside the panel, or clicking the
+  strip again.
+- If a jump cannot find the message (it sits outside the loaded history window), the
+  panel says so instead of failing silently — click `Load older`, then jump again.
 
 ## Jump to a message
 
@@ -30,11 +43,13 @@ Click a bar on the rail — or a row in the panel:
    view first.
 2. The chat scrolls so the target message sits ~96px below the top.
 3. The message flashes for 1.8 s.
+4. The panel closes once the jump landed.
 
 Notes:
 
 - Jumping works only for messages already inside the loaded history window (the panel
-  only lists loaded questions — use `Load older` first for deeper history).
+  only lists loaded questions — use `Load older` first for deeper history). A failed
+  jump is reported in the panel footer.
 - `prefers-reduced-motion` disables the smooth scroll and the flash animation.
 
 ## Search

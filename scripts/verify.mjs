@@ -6,11 +6,13 @@
  *   1. manifest/exports/files consistency — every exported path exists;
  *   2. cordis.patch.yml parses, its first insert has an id, and its name matches the package name;
  *   3. lib/client.js starts with the window.__ModuleLoader__.load wrapper;
- *   4. no absolute machine paths (/Users/...) inside lib/;
- *   5. pure-logic assertions from lib/client/outline.js (flatten text incl.
- *      image blocks, collect/filter questions, formatTime, turn extraction).
+ *   4. the rail interaction contract — click pins the panel, a failed jump is reported;
+ *   5. no absolute machine paths (/Users/...) inside lib/;
+ *   6. pure-logic assertions from lib/client/outline.js (flatten text incl.
+ *      image blocks, collect/filter questions, formatTime, turn extraction,
+ *      jump-target row matching).
  *
- * Checks 3–5 depend on build artifacts (lib/) and report [skip] until
+ * Checks 3–6 depend on build artifacts (lib/) and report [skip] until
  * `pnpm build` has run; the manifest/patch checks always run.
  */
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
@@ -135,7 +137,25 @@ if (existsSync(clientBundle)) {
   skip('bundle shape (lib/client.js not built yet)')
 }
 
-// --- 4. no absolute machine paths inside lib/ --------------------------------
+// --- 4. rail interaction contract in the built bundle ------------------------
+// The rail must respond to a click even when no hover event ever fires
+// (the "shows but will not open" bug): the panel is pinned by a click on the
+// strip or a bar, a failed jump says so, and both state markers are rendered.
+if (existsSync(clientBundle)) {
+  const text = readFileSync(clientBundle, 'utf8')
+  check('rail click pins the panel open', /data-dso-open/.test(text) && /setPinned\(/.test(text))
+  check('panel renders its pinned state', /data-dso-pinned/.test(text))
+  check('a failed jump is reported in the panel', /data-dso-jump-failed/.test(text))
+  check(
+    'jump matches both flow key attributes',
+    /data-chat-anchor-key/.test(text) && /data-chat-flow-key/.test(text),
+  )
+  check('escape / outside click releases the pin', /mousedown/.test(text) && /Escape/.test(text))
+} else {
+  skip('rail interaction contract (lib/client.js not built yet)')
+}
+
+// --- 5. no absolute machine paths inside lib/ --------------------------------
 const libDir = join(root, 'lib')
 if (existsSync(libDir)) {
   const offenders = []
@@ -200,6 +220,12 @@ if (existsSync(outlineJs)) {
 
   const fakeRow = { getAttribute: (name) => (name === 'data-chat-anchor-key' ? 'u2' : null) }
   check('isJumpTargetRow matches data-chat-anchor-key', isJumpTargetRow(fakeRow, 'u2') === true && isJumpTargetRow(fakeRow, 'u9') === false)
+
+  const flowOnlyRow = { getAttribute: (name) => (name === 'data-chat-flow-key' ? 'u3' : null) }
+  check(
+    'isJumpTargetRow also matches the sibling data-chat-flow-key',
+    isJumpTargetRow(flowOnlyRow, 'u3') === true && isJumpTargetRow(flowOnlyRow, 'u2') === false,
+  )
 } else {
   skip('pure-logic assertions (lib/client/outline.js not built yet)')
 }

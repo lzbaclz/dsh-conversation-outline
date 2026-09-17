@@ -78,5 +78,12 @@ export declare function formatTime(ms: number): string;
 export interface ElementLike {
     getAttribute(name: string): string | null;
 }
-/** Pure DOM predicate for the jump loop: is this row the target node? */
+/**
+ * Pure DOM predicate for the jump loop: is this row the target node?
+ *
+ * Exact match only, against either attribute the flow wrapper carries — the
+ * platform's own anchor lookup uses `data-chat-anchor-key`, and its sibling
+ * `data-chat-flow-key` holds the same value, so a row is still found when only
+ * one of the two is present.
+ */
 export declare function isJumpTargetRow(row: ElementLike, key: string): boolean;

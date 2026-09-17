@@ -2,8 +2,9 @@
 
 ![banner](assets/banner.png)
 
-[![npm](https://img.shields.io/badge/npm-%40chestnut23%2Fdsh--conversation--outline-cb3837)](https://www.npmjs.com/package/@chestnut23/dsh-conversation-outline)
-[![license](https://img.shields.io/badge/license-MIT-2fbf8f)](LICENSE)
+[![npm](https://img.shields.io/npm/v/@chestnut23%2Fdsh-conversation-outline.svg)](https://www.npmjs.com/package/@chestnut23/dsh-conversation-outline)
+[![npm downloads](https://img.shields.io/npm/dm/@chestnut23%2Fdsh-conversation-outline.svg)](https://www.npmjs.com/package/@chestnut23/dsh-conversation-outline)
+[![license](https://img.shields.io/npm/l/@chestnut23%2Fdsh-conversation-outline.svg)](LICENSE)
 [![node](https://img.shields.io/badge/node-%5E22.19%20%7C%7C%20%3E%3D24-5FA04E?logo=nodedotjs)](https://nodejs.org/)
 [![stars](https://img.shields.io/github/stars/lzbaclz/dsh-conversation-outline.svg)](https://github.com/lzbaclz/dsh-conversation-outline)
 [![dsh plugin](https://img.shields.io/badge/dsh-plugin-4d6bfe)](https://github.com/deepseek-ai/DeepSeek-Harness)
@@ -23,10 +24,13 @@
 - **右侧细条（minimap）**——紧贴右边缘的窄竖条，按时间顺序每个问题一根小横条。
   平时不占地方、不影响阅读；超过 60 个问题折叠为顶部 `+N` 标记。
 - **悬停预览**——鼠标移到细条上，面板滑出：每个问题开头几个字（单行截断）、`#轮次`
-  徽标与 `HH:MM` 时间。移开 240ms 后自动收起；触屏点击可固定面板，`Esc` 关闭。
-  纯覆盖层，**正文布局纹丝不动**。
+  徽标与 `HH:MM` 时间。移开 240ms 后自动收起。纯覆盖层，**正文布局纹丝不动**。
+- **点击也能打开**——点细条本身（或任意一根小横条）会把面板**钉住**，直到你用 `Esc`、
+  × 或点击面板外才关闭；因此触屏、手写笔、自动化脚本这类「永远没有 hover 事件」的场景
+  同样可用。
 - **点击跳转**——即使停在「轨迹」视图也会自动切回聊天视图，滚动定位并闪烁 1.8s，
-  尊重 `prefers-reduced-motion`。
+  尊重 `prefers-reduced-motion`；万一目标消息不在已加载的历史窗口里，面板会明确告诉你，
+  而不是静默失败。
 - **搜索 & 加载更早**——大小写不敏感过滤 + 翻历史分页。
 - **实时**——会话进行中新问题自动出现；跟随当前会话，切换即收起。
 - **运行时零依赖**——浏览器包只引用 React 等平台公共模块，其余全部内联并在构建期
@@ -67,7 +71,7 @@ dsh plugin --profile web add "link:$(pwd)"
 dsh plugin --profile web list
 ```
 
-升级用同一条 `add` 命令（可钉版本：`@chestnut23/dsh-conversation-outline@0.1.0`）。
+升级用同一条 `add` 命令（可钉版本：`@chestnut23/dsh-conversation-outline@0.1.2`）。
 
 ## 使用
 

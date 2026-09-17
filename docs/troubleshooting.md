@@ -14,10 +14,22 @@
 Your page is still running an old bundle. Refresh the page (Ctrl/Cmd+R). If a stale
 version persists, restart the DSH Web service and refresh again.
 
+## The rail shows but the panel will not open
+
+Click the strip (or any bar) — since v0.1.1 a click pins the panel open, so it no longer
+depends on a hover event reaching the rail. If a click still does nothing at all:
+
+1. Check the pointer is on the strip, not on the window edge outside the app frame.
+2. Open the browser console: a failure inside the jump path logs the target key.
+3. Refresh the page once — a bundle in the page cache can predate the fix.
+4. If it still fails, report the console output with the DSH version and the plugin
+   version (`dsh plugin --profile web list`).
+
 ## Jumping does nothing / logs "jump failed"
 
 - The target message must be in the **loaded history window** (the panel only lists
-  loaded questions). Click `Load older` first for deeper history, then jump again.
+  loaded questions). Click `Load older` first for deeper history, then jump again. The
+  panel now shows this notice itself instead of failing silently.
 - Extremely long sessions: if the row does not render within 1.5 s after switching
   views, the jump is abandoned (a console warning is logged). Retrying usually works.
 

@@ -2,8 +2,9 @@
 
 ![banner](assets/banner.png)
 
-[![npm](https://img.shields.io/badge/npm-%40chestnut23%2Fdsh--conversation--outline-cb3837)](https://www.npmjs.com/package/@chestnut23/dsh-conversation-outline)
-[![license](https://img.shields.io/badge/license-MIT-2fbf8f)](LICENSE)
+[![npm](https://img.shields.io/npm/v/@chestnut23%2Fdsh-conversation-outline.svg)](https://www.npmjs.com/package/@chestnut23/dsh-conversation-outline)
+[![npm downloads](https://img.shields.io/npm/dm/@chestnut23%2Fdsh-conversation-outline.svg)](https://www.npmjs.com/package/@chestnut23/dsh-conversation-outline)
+[![license](https://img.shields.io/npm/l/@chestnut23%2Fdsh-conversation-outline.svg)](LICENSE)
 [![node](https://img.shields.io/badge/node-%5E22.19%20%7C%7C%20%3E%3D24-5FA04E?logo=nodedotjs)](https://nodejs.org/)
 [![stars](https://img.shields.io/github/stars/lzbaclz/dsh-conversation-outline.svg)](https://github.com/lzbaclz/dsh-conversation-outline)
 [![dsh plugin](https://img.shields.io/badge/dsh-plugin-4d6bfe)](https://github.com/deepseek-ai/DeepSeek-Harness)
@@ -25,10 +26,13 @@ a flash highlight so you cannot miss it. Bilingual zh-CN / en.
   chronological order. Out of the way while you read; >60 questions fold into a `+N` marker.
 - **Hover to preview** — hover the rail and the panel slides out with each question's
   opening words (single-line truncated), `#turn` badge and `HH:MM` time. Collapses 240 ms
-  after you move away; tap-to-pin on touch, `Esc` closes. Pure overlay — your content
-  never shifts.
+  after you move away. Pure overlay — your content never shifts.
+- **Click to open as well** — clicking the strip (or a bar) pins the panel open until you
+  close it with `Esc`, the ×, or a click outside, so the rail also works on touch, pen and
+  automation where no hover event ever arrives.
 - **Click-to-jump** — switches to the Chat view (even from Trajectory), scrolls to the
-  message and flashes it for 1.8 s. Respects `prefers-reduced-motion`.
+  message and flashes it for 1.8 s. Respects `prefers-reduced-motion`; a jump that cannot
+  reach the message reports it in the panel instead of failing silently.
 - **Search & load older** — case-insensitive filtering, plus paging into older history.
 - **Live** — new questions appear while the session runs; follows the current session and
   collapses on switch.
@@ -72,7 +76,7 @@ dsh plugin --profile web list
 ```
 
 Upgrade with the same `add` command (optionally pin a version:
-`@chestnut23/dsh-conversation-outline@0.1.0`).
+`@chestnut23/dsh-conversation-outline@0.1.2`).
 
 ## Usage
 

@@ -130,7 +130,17 @@ export interface ElementLike {
   getAttribute(name: string): string | null
 }
 
-/** Pure DOM predicate for the jump loop: is this row the target node? */
+/** Attributes the chat flow renders a node's identity under. */
+const JUMP_KEY_ATTRIBUTES = ['data-chat-anchor-key', 'data-chat-flow-key'] as const
+
+/**
+ * Pure DOM predicate for the jump loop: is this row the target node?
+ *
+ * Exact match only, against either attribute the flow wrapper carries — the
+ * platform's own anchor lookup uses `data-chat-anchor-key`, and its sibling
+ * `data-chat-flow-key` holds the same value, so a row is still found when only
+ * one of the two is present.
+ */
 export function isJumpTargetRow(row: ElementLike, key: string): boolean {
-  return row.getAttribute('data-chat-anchor-key') === key
+  return JUMP_KEY_ATTRIBUTES.some((attribute) => row.getAttribute(attribute) === key)
 }

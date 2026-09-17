@@ -104,13 +104,27 @@ export function OutlinePanel({ sessions, useSessions, t }: OutlinePanelProps): R
   )
   const snapshot = useSyncExternalStore(subscribe, getSnapshot)
 
-  const [open, setOpen] = useState(false)
+  // Two independent sources for the panel being open: `pinned` is a click
+  // gesture (sticky until Escape / outside click / session change), `hovered`
+  // is pointer presence over the rail or the panel. Deriving `open` from both
+  // means a click on the rail opens the panel even when no hover event ever
+  // fires (touch, synthetic/automation input, or a pointer that entered the
+  // strip without crossing its boundary), and a hover preview still collapses
+  // on its own once the pointer leaves.
+  const [pinned, setPinned] = useState(false)
+  const [hovered, setHovered] = useState(false)
+  const open = pinned || hovered
   const [query, setQuery] = useState('')
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  // The question whose jump could not be completed; the panel says so instead
+  // of failing silently (the row may sit outside the loaded history window).
+  const [jumpFailed, setJumpFailed] = useState<string | null>(null)
   const timeoutsRef = useRef<number[]>([])
   const rafsRef = useRef<number[]>([])
   const flashedRowRef = useRef<Element | null>(null)
   const collapseTimerRef = useRef<number | null>(null)
+  const railRef = useRef<HTMLDivElement | null>(null)
+  const panelRef = useRef<HTMLDivElement | null>(null)
 
   // Cancel pending jump work (RAFs/timeouts), the flash highlight, and a
   // scheduled hover collapse.
@@ -129,22 +143,45 @@ export function OutlinePanel({ sessions, useSessions, t }: OutlinePanelProps): R
     }
   }, [])
 
+  /** Close the panel from any trigger: drop the pin and the hover preview. */
+  const closePanel = useCallback(() => {
+    setPinned(false)
+    setHovered(false)
+    cancelCollapseRef.current()
+  }, [])
+
   // Session change → cancel pending work and collapse (navigate closes the
   // panel, spec §2.1; a mid-jump poll must not target the stale session).
   useEffect(() => {
     clearPending()
-    setOpen(false)
+    setPinned(false)
+    setHovered(false)
+    setJumpFailed(null)
   }, [current, clearPending])
 
-  // Escape closes the panel (hover-opened or tap-pinned).
+  // Escape closes the panel (hover-opened or click-pinned).
   useEffect(() => {
     if (!open) return
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false)
+      if (event.key === 'Escape') closePanel()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [open])
+  }, [open, closePanel])
+
+  // A click anywhere outside the rail and the panel releases a pin, so the
+  // panel behaves like every other dismissible overlay on the page.
+  useEffect(() => {
+    if (!pinned) return
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target
+      if (!(target instanceof Node)) return
+      if (railRef.current?.contains(target) || panelRef.current?.contains(target)) return
+      closePanel()
+    }
+    window.addEventListener('mousedown', onPointerDown)
+    return () => window.removeEventListener('mousedown', onPointerDown)
+  }, [pinned, closePanel])
 
   // Unmount cleanup: cancel pending flash/copied timeouts, jump RAFs, collapse
   // timer, and the flash attribute.
@@ -156,28 +193,63 @@ export function OutlinePanel({ sessions, useSessions, t }: OutlinePanelProps): R
   const hasMore = snapshot?.hasMore ?? false
   const loadingOlder = snapshot?.loadingOlder ?? false
 
-  // ---- hover-open mechanics (rail ⇄ panel travel survives via the grace) ---
+  // ---- open mechanics: click pins, hover previews, grace period between ---
   const cancelCollapse = useCallback(() => {
     if (collapseTimerRef.current !== null) {
       window.clearTimeout(collapseTimerRef.current)
       collapseTimerRef.current = null
     }
   }, [])
+  // `closePanel` above runs before this declaration; a ref keeps the two
+  // callbacks independent of declaration order.
+  const cancelCollapseRef = useRef(cancelCollapse)
+  cancelCollapseRef.current = cancelCollapse
+
   const scheduleCollapse = useCallback(() => {
     cancelCollapse()
     collapseTimerRef.current = window.setTimeout(() => {
       collapseTimerRef.current = null
-      setOpen(false)
+      // Only a preview collapses on its own: a pinned panel stays until it is
+      // closed, and a pointer still inside the rail or the panel (Chromium
+      // raises no further enter events while the pointer sits still) keeps the
+      // preview up.
+      if (railRef.current?.matches(':hover') || panelRef.current?.matches(':hover')) return
+      setHovered(false)
     }, COLLAPSE_DELAY_MS)
   }, [cancelCollapse])
-  const showPanel = useCallback(() => {
+
+  /** Pointer entered the rail or the panel: cancel a pending collapse, preview. */
+  const onEnter = useCallback(() => {
     cancelCollapse()
-    setOpen(true)
+    setHovered(true)
+  }, [cancelCollapse])
+
+  /** Pointer left: let the grace period decide, unless the panel is pinned. */
+  const onLeave = useCallback(() => {
+    if (pinned) return
+    scheduleCollapse()
+  }, [pinned, scheduleCollapse])
+
+  /** A click on the rail (or any bar) opens the panel and keeps it open. */
+  const togglePin = useCallback(() => {
+    cancelCollapse()
+    setPinned((value) => !value)
+    setHovered(true)
+  }, [cancelCollapse])
+
+  /** The panel's own controls: clicking inside never closes it. */
+  const keepOpen = useCallback(() => {
+    cancelCollapse()
+    setHovered(true)
   }, [cancelCollapse])
 
   /** Find the chat row for a node key (pure predicate over DOM rows). */
   const findRow = useCallback((key: string): Element | null => {
-    const rows = document.querySelectorAll('[data-chat-anchor-key]')
+    // Exact match on either anchor attribute the chat flow renders for a node:
+    // `data-chat-anchor-key` is the one the platform's own anchorElement() uses,
+    // `data-chat-flow-key` is its sibling on the same wrapper. No guessing at
+    // the key's internals — a wrong row is worse than a reported failure.
+    const rows = document.querySelectorAll('[data-chat-anchor-key], [data-chat-flow-key]')
     for (const row of rows) {
       if (isJumpTargetRow(row, key)) return row
     }
@@ -212,10 +284,11 @@ export function OutlinePanel({ sessions, useSessions, t }: OutlinePanelProps): R
 
   /** Jump-to-message algorithm (spec §2.2). */
   const jumpTo = useCallback(
-    (key: string) => {
+    (key: string, label?: string) => {
       // The conversation page must be mounted; abort silently otherwise.
       const scrollport = document.querySelector('[data-conversation-scroll]')
       if (!scrollport) return
+      setJumpFailed(null)
 
       // Ensure the Chat view is active: chat is order 0 — the FIRST tab of the
       // conversation-root tablist, when one exists (setView is idempotent).
@@ -235,18 +308,21 @@ export function OutlinePanel({ sessions, useSessions, t }: OutlinePanelProps): R
         const row = findRow(key)
         if (row) {
           flashAndScroll(row)
-          setOpen(false)
+          closePanel()
           return
         }
         if (Date.now() < deadline) {
           scheduleRaf(rafsRef, poll)
         } else {
+          // Never fail silently: the panel states what happened, and the
+          // console keeps the key for bug reports.
           console.warn(t('jumpFailed'), { key })
+          setJumpFailed(label ?? key)
         }
       }
       scheduleRaf(rafsRef, poll)
     },
-    [findRow, flashAndScroll, t],
+    [findRow, flashAndScroll, t, closePanel],
   )
 
   /** Copy a question's text (clipboard API with execCommand fallback). */
@@ -294,24 +370,30 @@ export function OutlinePanel({ sessions, useSessions, t }: OutlinePanelProps): R
     <>
       {/* Right-edge rail: always visible while the session has questions. */}
       <div
+        ref={railRef}
         className="dso-rail"
         role="group"
         aria-label={t('title')}
         tabIndex={0}
-        onMouseEnter={showPanel}
-        onMouseLeave={scheduleCollapse}
-        onFocus={showPanel}
-        onBlur={scheduleCollapse}
+        onMouseEnter={onEnter}
+        onMouseLeave={onLeave}
+        onFocus={onEnter}
+        onBlur={onLeave}
         onClick={(event) => {
-          // Tap (touch) on the strip itself pins/unpins the panel.
-          if (event.target === event.currentTarget) setOpen((v) => !v)
+          // Any click on the strip pins the panel open — the container itself,
+          // its padding, or the "+N" marker. Bars stop propagation and reach
+          // the same pin through the shared jump gesture below.
+          if (event.target === event.currentTarget || event.target instanceof HTMLSpanElement) {
+            togglePin()
+          }
         }}
         onKeyDown={(event) => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault()
-            setOpen((v) => !v)
+            togglePin()
           }
         }}
+        data-dso-open={open ? 'true' : undefined}
       >
         {overflow > 0 && (
           <span className="dso-rail-more" aria-label={t('moreBars', { count: overflow })}>
@@ -324,7 +406,15 @@ export function OutlinePanel({ sessions, useSessions, t }: OutlinePanelProps): R
             type="button"
             className="dso-bar"
             aria-label={t('barLabel', { n: start + index + 1 })}
-            onClick={() => jumpTo(item.key)}
+            onClick={(event) => {
+              event.stopPropagation()
+              // The bar's own job is the jump; the panel comes up pinned first
+              // so a click always has a visible effect, then jumpTo collapses
+              // it once the row is on screen.
+              setPinned(true)
+              setHovered(true)
+              jumpTo(item.key, item.text)
+            }}
           />
         ))}
       </div>
@@ -332,13 +422,16 @@ export function OutlinePanel({ sessions, useSessions, t }: OutlinePanelProps): R
       {/* Hover-expanded preview panel: question openings, one line each. */}
       {open && (
         <div
+          ref={panelRef}
           className="dso-panel"
           role="region"
           aria-label={t('title')}
-          onMouseEnter={showPanel}
-          onMouseLeave={scheduleCollapse}
-          onFocus={showPanel}
-          onBlur={scheduleCollapse}
+          data-dso-pinned={pinned ? 'true' : undefined}
+          onMouseEnter={onEnter}
+          onMouseLeave={onLeave}
+          onFocus={onEnter}
+          onBlur={onLeave}
+          onMouseDown={keepOpen}
         >
           <header className="dso-panel-header">
             <span className="dso-panel-title">{t('title')}</span>
@@ -347,7 +440,7 @@ export function OutlinePanel({ sessions, useSessions, t }: OutlinePanelProps): R
               type="button"
               className="dso-panel-close"
               aria-label={t('close')}
-              onClick={() => setOpen(false)}
+              onClick={closePanel}
             >
               ×
             </button>
@@ -373,7 +466,7 @@ export function OutlinePanel({ sessions, useSessions, t }: OutlinePanelProps): R
                   <button
                     type="button"
                     className="dso-row-main"
-                    onClick={() => jumpTo(item.key)}
+                    onClick={() => jumpTo(item.key, item.text)}
                   >
                     <span className="dso-turn">{item.turn !== undefined ? `#${item.turn}` : ''}</span>
                     <span className="dso-text">{item.text}</span>
@@ -392,6 +485,12 @@ export function OutlinePanel({ sessions, useSessions, t }: OutlinePanelProps): R
               ))
             )}
           </div>
+
+          {jumpFailed !== null && (
+            <p className="dso-jump-failed" role="status" data-dso-jump-failed="true">
+              {t('jumpFailed')}
+            </p>
+          )}
 
           {hasMore && (
             <footer className="dso-footer">
