@@ -41,10 +41,12 @@ a flash highlight so you cannot miss it. Bilingual zh-CN / en.
 
 ## Install
 
-> **Requirements**: DSH ≥ `0.1.5-rc.2` (the current `next` channel / the DSH
-> Desktop app). The 0.1.5 line moved the Chat node graph into a session-scoped
-> store, so older hosts need the previous plugin release (see the version table
-> below).
+> **Requirements**: DSH ≥ `0.1.5-rc.2` (the `next` channel / the DSH Desktop app).
+>
+> | Plugin version | Works with |
+> |---|---|
+> | `0.2.x` | DSH ≥ `0.1.5-rc.2` |
+> | `0.1.2` and earlier | DSH `0.1.0-rc.x` (the Chat node graph still lived in `snapshot.chat`) |
 
 
 **Prerequisites**: [DeepSeek Harness](https://github.com/deepseek-ai/DeepSeek-Harness)

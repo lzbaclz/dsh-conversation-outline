@@ -38,9 +38,12 @@
 
 ## 安装
 
-> **环境要求**：DSH ≥ `0.1.5-rc.2`（当前 `next` 通道 / DSH Desktop 桌面版）。
-> 0.1.5 把 Chat 节点图搬进了会话级 store，更早的宿主请使用上一个版本
-> （见下方版本对照表）。
+> **环境要求**：DSH ≥ `0.1.5-rc.2`（`next` 通道 / DSH Desktop 桌面版）。
+>
+> | 插件版本 | 适配的 DSH |
+> |---|---|
+> | `0.2.x` | DSH ≥ `0.1.5-rc.2` |
+> | `0.1.2` 及更早 | DSH `0.1.0-rc.x`（Chat 节点图还在 `snapshot.chat` 里） |
 
 
 **前置要求**：已安装 [DeepSeek Harness](https://github.com/deepseek-ai/DeepSeek-Harness)
