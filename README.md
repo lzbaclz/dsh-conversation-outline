@@ -2,7 +2,7 @@
 
 ![banner](assets/banner.png)
 
-[![npm](https://img.shields.io/badge/npm-v0.1.0-cb3837)](https://www.npmjs.com/package/dsh-conversation-outline)
+[![npm](https://img.shields.io/badge/npm-%40chestnut23%2Fdsh--conversation--outline-cb3837)](https://www.npmjs.com/package/@chestnut23/dsh-conversation-outline)
 [![license](https://img.shields.io/badge/license-MIT-2fbf8f)](LICENSE)
 [![node](https://img.shields.io/badge/node-%5E22.19%20%7C%7C%20%3E%3D24-5FA04E?logo=nodedotjs)](https://nodejs.org/)
 [![stars](https://img.shields.io/github/stars/lzbaclz/dsh-conversation-outline.svg)](https://github.com/lzbaclz/dsh-conversation-outline)
@@ -45,8 +45,9 @@ If you run DSH via `npx`, prefix the commands with `npx -p @deepseek-ai/dsh `.
 # 1) GitHub (works right now — recommended)
 dsh plugin --profile web add github:lzbaclz/dsh-conversation-outline
 
-# 2) npm (available once the package is published to the npm registry)
-dsh plugin --profile web add dsh-conversation-outline
+# 2) npm (published under our own scope; the unscoped name belongs to an
+#    unrelated project — always install the @chestnut23 scope)
+dsh plugin --profile web add @chestnut23/dsh-conversation-outline
 
 # 3) from source (local development)
 git clone https://github.com/lzbaclz/dsh-conversation-outline.git
@@ -58,8 +59,10 @@ dsh plugin --profile web add "link:$(pwd)"
 > **Zero build scripts on the GitHub path**: the built `lib/` is committed to this repo
 > (`.gitignore` deliberately does not ignore it), so a `github:` install fetches
 > ready-to-load artifacts — no `prepare` script, no profile `allowBuilds` configuration.
-> If the npm command reports `package not found`, the package has not been published yet —
-> use the GitHub path above.
+> **Name warning**: an unrelated project owns the *unscoped* npm name
+> `dsh-conversation-outline`. This plugin is only published as
+> `@chestnut23/dsh-conversation-outline` — always install the scoped name (or the
+> GitHub path above).
 
 **After installing**: restart the DSH Web service and refresh the page (`link:` installs
 just need a page refresh after `pnpm build`). Confirm with:
@@ -69,7 +72,7 @@ dsh plugin --profile web list
 ```
 
 Upgrade with the same `add` command (optionally pin a version:
-`dsh-conversation-outline@0.1.0`).
+`@chestnut23/dsh-conversation-outline@0.1.0`).
 
 ## Usage
 

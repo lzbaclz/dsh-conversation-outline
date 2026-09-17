@@ -1,5 +1,5 @@
 {
-  "name": "dsh-conversation-outline",
+  "name": "@chestnut23/dsh-conversation-outline",
   "version": "0.1.0",
   "description": "Codex-style conversation outline for DeepSeek Harness: a floating panel listing every user question in the current conversation with search, load-older and click-to-jump (scroll + highlight). Bilingual zh-CN / en.",
   "type": "module",
@@ -63,6 +63,10 @@
     "node": "^22.19.0 || >=24"
   },
   "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "keywords": [
     "dsh",
     "dsh-plugin",

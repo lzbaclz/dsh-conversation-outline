@@ -2,7 +2,7 @@
 
 ![banner](assets/banner.png)
 
-[![npm](https://img.shields.io/badge/npm-v0.1.0-cb3837)](https://www.npmjs.com/package/dsh-conversation-outline)
+[![npm](https://img.shields.io/badge/npm-%40chestnut23%2Fdsh--conversation--outline-cb3837)](https://www.npmjs.com/package/@chestnut23/dsh-conversation-outline)
 [![license](https://img.shields.io/badge/license-MIT-2fbf8f)](LICENSE)
 [![node](https://img.shields.io/badge/node-%5E22.19%20%7C%7C%20%3E%3D24-5FA04E?logo=nodedotjs)](https://nodejs.org/)
 [![stars](https://img.shields.io/github/stars/lzbaclz/dsh-conversation-outline.svg)](https://github.com/lzbaclz/dsh-conversation-outline)
@@ -42,8 +42,9 @@
 # 1) GitHub（现在就能装，推荐）
 dsh plugin --profile web add github:lzbaclz/dsh-conversation-outline
 
-# 2) npm（发布到 npm registry 之后可用）
-dsh plugin --profile web add dsh-conversation-outline
+# 2) npm（发布在你自己的 scope 下；无 scope 的同名包属于另一个无关项目，
+#    务必安装 @chestnut23 scope）
+dsh plugin --profile web add @chestnut23/dsh-conversation-outline
 
 # 3) 从源码（本地开发）
 git clone https://github.com/lzbaclz/dsh-conversation-outline.git
@@ -55,7 +56,9 @@ dsh plugin --profile web add "link:$(pwd)"
 > **GitHub 路径零构建脚本**：本仓库把构建产物 `lib/` 一并提交（`.gitignore` 故意不忽略），
 > `github:` 安装拿到的就是可直接加载的产物——不需要 `prepare` 脚本，也不需要 profile
 > 里的 `allowBuilds` 配置。
-> 如果 npm 命令报 `package not found`，说明包还没发布到 npm——请用上面的 GitHub 路径。
+> **名称提醒**：npm 上**无 scope 的** `dsh-conversation-outline` 属于另一个无关项目；
+> 本插件只以 `@chestnut23/dsh-conversation-outline` 发布，请务必安装带 scope 的名字
+> （或走上面的 GitHub 路径）。
 
 **安装之后**：重启 DSH Web 服务并刷新页面（`link:` 安装只需在 `pnpm build` 后刷新）。
 确认插件在 profile 里：
@@ -64,7 +67,7 @@ dsh plugin --profile web add "link:$(pwd)"
 dsh plugin --profile web list
 ```
 
-升级用同一条 `add` 命令（可钉版本：`dsh-conversation-outline@0.1.0`）。
+升级用同一条 `add` 命令（可钉版本：`@chestnut23/dsh-conversation-outline@0.1.0`）。
 
 ## 使用
 

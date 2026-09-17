@@ -2,7 +2,11 @@
 # composition of a dsh profile. The plugin is client-only (all UI lives in the
 # browser bundle); this host row exists so the roster scan finds the package
 # and the composition has a resolvable plugin body.
+#
+# `name` must stay in sync with package.json `name` (the npm package is scoped
+# because the unscoped name was taken by an unrelated package). Quoted because
+# `@` is a reserved YAML indicator and cannot open a plain scalar.
 - insert:
     - id: dsh-conversation-outline
-      name: dsh-conversation-outline
+      name: '@chestnut23/dsh-conversation-outline'
       config: {}

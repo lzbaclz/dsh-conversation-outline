@@ -4,7 +4,7 @@
  * instance). Covers, per implementation-spec §4.1:
  *
  *   1. manifest/exports/files consistency — every exported path exists;
- *   2. cordis.patch.yml parses and its first insert id/name match package name;
+ *   2. cordis.patch.yml parses, its first insert has an id, and its name matches the package name;
  *   3. lib/client.js starts with the window.__ModuleLoader__.load wrapper;
  *   4. no absolute machine paths (/Users/...) inside lib/;
  *   5. pure-logic assertions from lib/client/outline.js (flatten text incl.
@@ -86,7 +86,9 @@ const idMatch = /^\s*-\s*id\s*:\s*(.+?)\s*$/m.exec(patchText)
 const nameMatch = /^\s*name\s*:\s*(.+?)\s*$/m.exec(patchText)
 const firstId = idMatch?.[1]?.replace(/^['"]|['"]$/g, '')
 const firstName = nameMatch?.[1]?.replace(/^['"]|['"]$/g, '')
-check('patch first insert id matches package name', firstId === pkg.name, `id=${firstId}`)
+// The row `id` is a stable composition-tree identity (any unique string); the
+// row `name` is what Node resolves, so only `name` must equal the package name.
+check('patch first insert has an id', typeof firstId === 'string' && firstId.length > 0, `id=${firstId}`)
 check('patch first insert name matches package name', firstName === pkg.name, `name=${firstName}`)
 
 // --- 3. bundle shape + purity -----------------------------------------------

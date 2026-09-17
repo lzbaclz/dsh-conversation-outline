@@ -24,7 +24,7 @@ const PLATFORM_EXTERNALS = [
 ]
 
 export default defineConfig({
-  name: 'dsh-conversation-outline/client',
+  name: '@chestnut23/dsh-conversation-outline/client',
   entry: { client: 'lib/client/index.js' },
   outDir: 'lib',
   format: 'cjs',
@@ -40,7 +40,9 @@ export default defineConfig({
   },
   outputOptions: {
     entryFileNames: 'client.js',
-    banner: 'window.__ModuleLoader__.load({ id: "dsh-conversation-outline", factory: (require) => {',
+    // The loader id MUST equal the package name: the browser roster keys the
+    // module record by it.
+    banner: 'window.__ModuleLoader__.load({ id: "@chestnut23/dsh-conversation-outline", factory: (require) => {',
     footer: 'return module.exports; } });',
     intro: 'var module = { exports: {} }; var exports = module.exports;',
   },
