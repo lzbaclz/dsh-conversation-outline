@@ -75,9 +75,9 @@ dsh plugin --profile web list
 
 ## 使用
 
-装好重启后，打开任何一个已有消息的会话，右侧边缘会出现细竖条：悬停预览问题、点击跳转、
-搜索过滤、`加载更早` 翻历史。完整走查：[docs/usage.md](docs/usage.md)。
-没看到？先看 [常见问题](docs/troubleshooting.md)。
+装好重启后，打开任何一个已有消息的会话，右侧边缘会出现细竖条：悬停预览问题；**点击细条
+（或小横条）打开并钉住面板**；点列表行跳转；搜索过滤、`加载更早` 翻历史。
+完整走查：[docs/usage.md](docs/usage.md)。没看到？先看 [常见问题](docs/troubleshooting.md)。
 
 ## 界面预览
 

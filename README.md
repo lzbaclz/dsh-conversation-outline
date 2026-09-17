@@ -81,9 +81,10 @@ Upgrade with the same `add` command (optionally pin a version:
 ## Usage
 
 Install, restart, open any session that already has messages — a thin strip appears on
-the right edge. Hover it to preview questions, click a bar or a row to jump, search to
-filter, `Load older` to page through history. Full walkthrough:
-[docs/usage.md](docs/usage.md). Something's not showing up? [Troubleshooting](docs/troubleshooting.md).
+the right edge. Hover it to preview questions; click the strip (or a bar) to open the
+panel and keep it open; click a row to jump; search to filter, `Load older` to page
+through history. Full walkthrough: [docs/usage.md](docs/usage.md). Something's not
+showing up? [Troubleshooting](docs/troubleshooting.md).
 
 ## Preview
 
