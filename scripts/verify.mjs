@@ -152,8 +152,12 @@ if (existsSync(clientBundle)) {
   )
   check('escape / outside click releases the pin', /mousedown/.test(text) && /Escape/.test(text))
   check(
-    'bundle resolves the session-scoped Chat store (0.1.5 contract)',
-    /uiConversation/.test(text) && /"chat"/.test(text),
+    'bundle resolves the session-scoped Chat store',
+    /uiConversation/.test(text) && /target\('chat'\)/.test(text),
+  )
+  check(
+    'bundle never reads the removed ConversationSnapshot.chat field',
+    !/snapshot\.chat|\.chat\.order/.test(text),
   )
 } else {
   skip('rail interaction contract (lib/client.js not built yet)')
@@ -200,67 +204,61 @@ if (existsSync(outlineJs)) {
   ])
   check('flattenQuestionText joins text + image placeholder + collapses whitespace', flat === 'hello [image] world next', JSON.stringify(flat))
 
-  // collect/filter from a fixture snapshot (flow order preserved, turn extracted).
-  const fixture = {
-    chat: {
-      order: ['u1', 'a1', 'u2', 's1', 'u3'],
-      nodes: new Map([
-        ['u1', { key: 'u1', kind: 'user', data: { kind: 'user', seq: 1, time: 1_700_000_000_000, content: [{ type: 'text', text: 'first' }] }, location: { kind: 'turn', turn: { turn: 1 } } }],
-        ['a1', { key: 'a1', kind: 'assistant', data: { kind: 'assistant', seq: 2, content: [] } }],
-        ['u2', { key: 'u2', kind: 'user', data: { kind: 'user', seq: 3, time: 1_700_000_060_000, content: [{ type: 'text', text: '  second  question  ' }] }, location: { kind: 'step', turn: { turn: 2 }, step: 0 } }],
-        ['s1', { key: 's1', kind: 'steering', data: { kind: 'steering', seq: 4, time: 1_700_000_120_000, content: [{ type: 'text', text: 'steer' }] }, location: { kind: 'turn', turn: { turn: 2 } } }],
-        ['u3', { key: 'u3', kind: 'user', data: { kind: 'user', seq: 5, time: 1_700_000_180_000, content: [] } }],
-      ]),
-    },
-  }
+  // collect/filter from a Chat store snapshot fixture (flow order preserved,
+  // turn extracted). This is the shape `target('chat').getSnapshot()` returns:
+  // `order`/`nodes` at the top level.
+  const nodes = new Map([
+    ['u1', { key: 'u1', kind: 'user', data: { kind: 'user', seq: 1, time: 1_700_000_000_000, content: [{ type: 'text', text: 'first' }] }, location: { kind: 'turn', turn: { turn: 1 } } }],
+    ['a1', { key: 'a1', kind: 'assistant', data: { kind: 'assistant', seq: 2, content: [] } }],
+    ['u2', { key: 'u2', kind: 'user', data: { kind: 'user', seq: 3, time: 1_700_000_060_000, content: [{ type: 'text', text: '  second  question  ' }] }, location: { kind: 'step', turn: { turn: 2 }, step: 0 } }],
+    ['s1', { key: 's1', kind: 'steering', data: { kind: 'steering', seq: 4, time: 1_700_000_120_000, content: [{ type: 'text', text: 'steer' }] }, location: { kind: 'turn', turn: { turn: 2 } } }],
+    ['u3', { key: 'u3', kind: 'user', data: { kind: 'user', seq: 5, time: 1_700_000_180_000, content: [] } }],
+  ])
+  const order = ['u1', 'a1', 'u2', 's1', 'u3']
+  const fixture = { order, nodes, hasMore: true, loadingOlder: false }
   const collected = collectQuestions(fixture)
   check('collectQuestions keeps user+steering in flow order, skips empty text', collected.length === 3, `count=${collected.length}`)
   check('collectQuestions extracts turn numbers (turn + step)', collected[0]?.turn === 1 && collected[1]?.turn === 2 && collected[2]?.turn === 2, JSON.stringify(collected.map((i) => i.turn)))
   check('collectQuestions flattens question text', collected[1]?.text === 'second question', JSON.stringify(collected[1]?.text))
 
-  // --- both generations of the host contract -------------------------------
+  // --- host contract regressions -------------------------------------------
   // 0.1.5-rc.2 moved the Chat node graph out of ConversationSnapshot into a
-  // session-scoped store: the very same snapshot that used to nest `chat` now
-  // carries neither `order` nor `nodes`. Reading `snapshot.chat.order`
-  // unconditionally threw inside the slot and took the rail down with it, so
-  // both shapes (and the empty one) must be handled without throwing.
-  const flatFixture = {
-    order: fixture.chat.order,
-    nodes: fixture.chat.nodes,
-    hasMore: false,
-    loadingOlder: false,
-  }
-  const flatCollected = collectQuestions(flatFixture)
+  // session-scoped store, so the plugin must read `order`/`nodes` from the
+  // store snapshot and must not touch `snapshot.chat` (that is what threw on
+  // every render and took the whole slot down, invisibly).
+  const storeSnapshot = { order, nodes }
   check(
-    'collectQuestions reads the flat 0.1.5 Chat store shape',
-    flatCollected.length === 3 && flatCollected[1]?.text === 'second question',
-    `count=${flatCollected.length}`,
-  )
-  check(
-    'both contract generations produce identical items',
-    JSON.stringify(flatCollected) === JSON.stringify(collected),
-  )
-  check(
-    'resolveOutlineFlow prefers the nested chat object',
-    resolveOutlineFlow(fixture)?.order === fixture.chat.order &&
-      resolveOutlineFlow(flatFixture)?.nodes === flatFixture.nodes,
+    'collectQuestions reads the Chat store snapshot shape',
+    resolveOutlineFlow(storeSnapshot)?.order === order &&
+      resolveOutlineFlow(storeSnapshot)?.nodes === nodes,
   )
 
-  // The crash regression itself: a session snapshot with no chat at all.
+  // The crash regression itself: a ConversationSnapshot from a 0.1.5 host —
+  // no `chat`, no `order`, no `nodes`. Must degrade to an empty rail.
   let crashed = false
   let empty = []
   try {
-    empty = collectQuestions({ sessionId: 's1', blank: true })
+    empty = collectQuestions({
+      sessionId: 's1',
+      running: false,
+      blank: true,
+      hasMore: true,
+      loadingOlder: false,
+      openState: 'open',
+    })
   } catch {
     crashed = true
   }
-  check('a snapshot without any chat shape returns [] instead of throwing', crashed === false && empty.length === 0)
+  check('a host snapshot with no chat flow returns [] instead of throwing', crashed === false && empty.length === 0)
   check(
     'resolveOutlineFlow rejects malformed shapes',
     resolveOutlineFlow(undefined) === undefined &&
       resolveOutlineFlow(null) === undefined &&
-    resolveOutlineFlow({}) === undefined &&
-    resolveOutlineFlow({ order: [] }) === undefined,
+      resolveOutlineFlow({}) === undefined &&
+      resolveOutlineFlow({ order: [] }) === undefined &&
+      // A legacy nested `chat` object is NOT a store snapshot: it must not be
+      // accepted silently (the store is the only supported source now).
+      resolveOutlineFlow({ chat: { order, nodes } }) === undefined,
   )
 
   const filtered = filterQuestions(collected, 'SECOND')

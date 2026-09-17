@@ -42,8 +42,10 @@ a flash highlight so you cannot miss it. Bilingual zh-CN / en.
 ## Install
 
 **Prerequisites**: [DeepSeek Harness](https://github.com/deepseek-ai/DeepSeek-Harness)
-(`dsh` available); Node.js `^22.19` or `>=24`; pnpm 10+.
+(`dsh` available) **≥ 0.1.5-rc.2**; Node.js `^22.19` or `>=24`; pnpm 10+.
 If you run DSH via `npx`, prefix the commands with `npx -p @deepseek-ai/dsh `.
+On an older host, use plugin `0.1.3` — see the
+[compatibility table](docs/troubleshooting.md#compatibility).
 
 ```sh
 # 1) GitHub (works right now — recommended)
@@ -76,7 +78,7 @@ dsh plugin --profile web list
 ```
 
 Upgrade with the same `add` command (optionally pin a version:
-`@chestnut23/dsh-conversation-outline@0.1.3`).
+`@chestnut23/dsh-conversation-outline@0.1.4`).
 
 ## Usage
 

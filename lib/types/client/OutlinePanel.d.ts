@@ -32,20 +32,21 @@ export interface OutlineChatFeed {
     subscribe: (onChange: () => void) => () => void;
 }
 /**
- * Resolve one observable Chat source out of a session binding for the two
- * contract generations DSH shipped:
+ * Resolve one observable Chat source out of a session binding.
  *
- * - `binding.ctx.uiConversation.binding(binding).target('chat')` — 0.1.5-rc.2
- *   and later, where the Chat node graph is a session-scoped store and
- *   `ConversationSnapshot` no longer carries `chat`;
- * - the session face itself — earlier builds, whose snapshot still exposes
- *   `chat` (and which `resolveOutlineFlow` prefers when it is present).
+ * The Chat node graph is a session-scoped store, reached exactly the way
+ * `@deepseek-ai/dsh-client-ui-chat` reaches it:
  *
- * Reading the provider off `binding.ctx` rather than the root context keeps it
- * correct under any bus arrangement, and a host without the service degrades to
- * the legacy face instead of crashing the slot.
+ * ```js
+ * ctx.uiConversation.binding(binding).target('chat')  // { getSnapshot, subscribe }
+ * ```
+ *
+ * Reading the provider off `binding.ctx` (rather than the root context) keeps
+ * this correct under any bus arrangement; a host that does not offer the
+ * service yields `undefined`, and the rail then renders nothing instead of
+ * crashing the slot.
  */
-export declare function resolveChatFeed(session: OutlineChatFeed | undefined, binding: {
+export declare function resolveChatFeed(binding: {
     ctx?: {
         uiConversation?: unknown;
     };

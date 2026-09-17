@@ -1,29 +1,44 @@
 # Troubleshooting
 
+## Compatibility
+
+| Plugin | Host DSH | Notes |
+| --- | --- | --- |
+| **0.1.4+** | **≥ 0.1.5-rc.2** | reads the session-scoped Chat store only (`uiConversation…target('chat')`) |
+| 0.1.3 | ≥ 0.1.5-rc.2, and older | store first, `ConversationSnapshot.chat` as fallback |
+| ≤ 0.1.2 | hosts that still nest `chat` | **crashes on 0.1.5+** — see below |
+
 ## The rail is missing entirely, and the console shows a slot error
 
-Since 0.1.3 the plugin reads the Chat node graph from the session-scoped Chat store
-(`uiConversation…target('chat')`), which is where DSH ≥ 0.1.5-rc.2 keeps it, and falls
-back to `ConversationSnapshot.chat` for older builds.
+The Chat node graph is a **session-scoped store** from DSH 0.1.5-rc.2 on, reached the same
+way the platform's own Chat view reaches it:
 
-Before 0.1.3 the plugin read `snapshot.chat` unconditionally. On DSH versions that no
-longer carry it, that threw on every render and the shell's slot error boundary replaced
-the whole overlay entry with an empty `[data-slot-error="shell.overlay"]` div — the rail
-simply never appeared, with no visible error:
+```js
+ctx.uiConversation.binding(binding).target('chat')   // { getSnapshot, subscribe }
+```
+
+Its snapshot carries `order` / `nodes` at the top level. `ConversationSnapshot` no longer
+has a `chat` member.
+
+Releases **≤ 0.1.2** read `snapshot.chat` unconditionally. On a 0.1.5+ host that threw on
+every render, and the shell's slot error boundary replaced the entire overlay entry with
+an empty `[data-slot-error="shell.overlay"]` div — the rail never appeared, with no
+visible error anywhere:
 
 ```
 TypeError: can't access property "order", snapshot.chat is undefined
 slot entry crashed in 'shell.overlay'
 ```
 
-Fix: update the plugin to **0.1.3 or later**. To confirm what your host is running:
+Fix: install **0.1.4 or later** for DSH ≥ 0.1.5-rc.2:
 
 ```sh
-dsh --version          # the CLI/app version
+dsh plugin --profile web add @chestnut23/dsh-conversation-outline@0.1.4
 ```
 
-If you are on an older host and cannot update, pin the plugin to `0.1.2` (that release
-still expects the nested `chat` object). Do not mix: 0.1.3 works on both generations.
+Check the host version with `dsh --version`. On a host older than 0.1.5-rc.2, stay on
+`0.1.3` (the last release that supports the nested `chat` snapshot); `0.1.4+` targets the
+store contract only, on purpose.
 
 Note: on a host that has its own turn navigation rail, that built-in rail (one tick per
 turn, dark bar = current turn) sits in the same edge and can be mistaken for this

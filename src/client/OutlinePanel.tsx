@@ -56,34 +56,31 @@ export interface OutlineChatFeed {
 const NO_FLOW: OutlineSnapshotLike = { order: [] }
 
 /**
- * Resolve one observable Chat source out of a session binding for the two
- * contract generations DSH shipped:
+ * Resolve one observable Chat source out of a session binding.
  *
- * - `binding.ctx.uiConversation.binding(binding).target('chat')` — 0.1.5-rc.2
- *   and later, where the Chat node graph is a session-scoped store and
- *   `ConversationSnapshot` no longer carries `chat`;
- * - the session face itself — earlier builds, whose snapshot still exposes
- *   `chat` (and which `resolveOutlineFlow` prefers when it is present).
+ * The Chat node graph is a session-scoped store, reached exactly the way
+ * `@deepseek-ai/dsh-client-ui-chat` reaches it:
  *
- * Reading the provider off `binding.ctx` rather than the root context keeps it
- * correct under any bus arrangement, and a host without the service degrades to
- * the legacy face instead of crashing the slot.
+ * ```js
+ * ctx.uiConversation.binding(binding).target('chat')  // { getSnapshot, subscribe }
+ * ```
+ *
+ * Reading the provider off `binding.ctx` (rather than the root context) keeps
+ * this correct under any bus arrangement; a host that does not offer the
+ * service yields `undefined`, and the rail then renders nothing instead of
+ * crashing the slot.
  */
 export function resolveChatFeed(
-  session: OutlineChatFeed | undefined,
   binding: { ctx?: { uiConversation?: unknown } } | undefined,
 ): OutlineChatFeed | undefined {
-  if (session === undefined || binding === undefined) return undefined
-  const uiConversation = binding.ctx?.uiConversation as
-    | { binding?: (source: unknown) => { target?: (name: string) => OutlineChatFeed | undefined } }
+  const uiConversation = binding?.ctx?.uiConversation as
+    | {
+        binding?: (source: unknown) => {
+          target?: (name: string) => OutlineChatFeed | undefined
+        }
+      }
     | undefined
-  const chat = uiConversation?.binding?.(session)?.target?.('chat')
-  if (chat !== undefined) return chat
-  // Legacy fallback: on builds whose ConversationSnapshot still nests `chat`,
-  // the session face itself is the observable carrying it. The cast is
-  // deliberate — that generation is not describable by this build's types, and
-  // `resolveOutlineFlow` reads whatever shape it finds defensively.
-  return session as unknown as OutlineChatFeed
+  return uiConversation?.binding?.(binding)?.target?.('chat')
 }
 const JUMP_HEADROOM = 96
 const JUMP_TIMEOUT_MS = 1500
@@ -140,14 +137,18 @@ export function OutlinePanel({
   t,
 }: OutlinePanelProps): ReactElement | null {
   const current = useSessions((s) => s.current)
-  const session = current ? sessions.binding(current)?.session : undefined
-
-  // Question flow: the Chat store (0.1.5-rc.2+) or the session snapshot's own
-  // `chat` (earlier builds). Pagination still lives on the session face in both.
-  const chat = useMemo(
-    () => resolveChatFeed(session, current ? sessions.binding(current) : undefined),
-    [session, sessions, current],
+  // One binding per session, shared by the session face and the Chat feed: the
+  // binding is the identity `uiConversation.binding()` caches its per-session
+  // target on, so both must be resolved from the same object.
+  const binding = useMemo(
+    () => (current ? sessions.binding(current) : undefined),
+    [sessions, current],
   )
+  const session = binding?.session
+
+  // Question flow: the session-scoped Chat store. History pagination lives on
+  // the session face, so its two flags are merged in here.
+  const chat = useMemo(() => resolveChatFeed(binding), [binding])
   const subscribe = useCallback(
     (onChange: () => void) => (chat ? chat.subscribe(onChange) : () => {}),
     [chat],

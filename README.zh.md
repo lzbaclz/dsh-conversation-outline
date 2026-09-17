@@ -39,8 +39,9 @@
 ## 安装
 
 **前置要求**：已安装 [DeepSeek Harness](https://github.com/deepseek-ai/DeepSeek-Harness)
-（`dsh` 命令可用）；Node.js `^22.19` 或 `>=24`；pnpm 10+。
+（`dsh` 命令可用）且版本 **≥ 0.1.5-rc.2**；Node.js `^22.19` 或 `>=24`；pnpm 10+。
 通过 `npx` 运行 DSH 的话，给下面命令加上 `npx -p @deepseek-ai/dsh ` 前缀。
+更老的宿主请装插件 `0.1.3`，见[兼容表](docs/troubleshooting.md#compatibility)。
 
 ```sh
 # 1) GitHub（现在就能装，推荐）
@@ -71,7 +72,7 @@ dsh plugin --profile web add "link:$(pwd)"
 dsh plugin --profile web list
 ```
 
-升级用同一条 `add` 命令（可钉版本：`@chestnut23/dsh-conversation-outline@0.1.3`）。
+升级用同一条 `add` 命令（可钉版本：`@chestnut23/dsh-conversation-outline@0.1.4`）。
 
 ## 使用
 

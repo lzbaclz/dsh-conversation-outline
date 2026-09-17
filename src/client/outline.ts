@@ -41,30 +41,28 @@ export interface OutlineChatNode {
   }
 }
 
-/** One Chat target: the node flow and its index, nested under `chat`. */
+/** One Chat target: the part of its snapshot the outline reads. */
 export interface OutlineChatLike {
   order: readonly string[]
   nodes: { get(key: string): OutlineChatNode | undefined }
 }
 
 /**
- * Snapshot shape accepted by collectQuestions.
+ * Snapshot shape accepted by collectQuestions: the Chat store's own snapshot.
  *
- * Two generations of the DSH contract are accepted, because the Chat node graph
- * moved between them:
+ * Since DSH 0.1.5-rc.2 the Chat node graph is a session-scoped store reached
+ * through `uiConversation.binding(session).target('chat')`, and its snapshot
+ * carries `order` / `nodes` at the top level (see `EMPTY_CHAT_SNAPSHOT` in
+ * `@deepseek-ai/dsh-client-ui-chat`). It no longer lives on
+ * `ConversationSnapshot` — reading `snapshot.chat` there is what crashed the
+ * slot on 0.1.5 hosts.
  *
- * - `chat.order` / `chat.nodes` — the layout this plugin was written against,
- *   still what `@deepseek-ai/dsh-client-runtime` exposes as
- *   `ConversationSnapshot.chat`;
- * - `order` / `nodes` at the top level — the session-scoped Chat store that
- *   `@deepseek-ai/dsh-client-ui-chat` publishes from 0.1.5-rc.2 on, where
- *   `ConversationSnapshot` no longer carries `chat` at all.
- *
- * Both are optional so "this session has no chat yet" is a valid input rather
- * than a crash: the rail then has nothing to outline.
+ * `order` and `nodes` are optional so "the store has not produced a flow yet"
+ * is a valid input rather than a crash: the rail then has nothing to outline.
+ * `hasMore` / `loadingOlder` are merged in by the caller from the session face,
+ * which is where the 0.1.5 contract keeps history pagination.
  */
 export interface OutlineSnapshotLike {
-  chat?: Partial<OutlineChatLike> | undefined
   order?: readonly string[] | undefined
   nodes?: { get(key: string): OutlineChatNode | undefined } | undefined
   /** Older history still exists outside the loaded window (session face). */
@@ -73,27 +71,23 @@ export interface OutlineSnapshotLike {
   loadingOlder?: boolean | undefined
 }
 
-/** The node flow plus its index, after resolving both contract generations. */
+/** The node flow plus its index, after validating the store snapshot. */
 export interface OutlineFlow {
   order: readonly string[]
   nodes: { get(key: string): OutlineChatNode | undefined }
 }
 
 /**
- * Resolve one snapshot into the flow to walk, preferring the nested `chat`
- * object and falling back to the top-level store fields.
+ * Resolve a Chat store snapshot into the flow to walk.
  *
- * Never throws: a snapshot carrying neither shape yields `undefined`, so the
+ * Never throws: a snapshot that has not produced `order` + `nodes` yet (or a
+ * host that handed over something else entirely) yields `undefined`, so the
  * caller renders an empty rail instead of crashing its slot.
  */
 export function resolveOutlineFlow(
   snapshot: OutlineSnapshotLike | null | undefined,
 ): OutlineFlow | undefined {
   if (snapshot === null || snapshot === undefined) return undefined
-  const chat = snapshot.chat
-  if (chat !== undefined && Array.isArray(chat.order) && chat.nodes !== undefined) {
-    return { order: chat.order, nodes: chat.nodes }
-  }
   if (Array.isArray(snapshot.order) && snapshot.nodes !== undefined) {
     return { order: snapshot.order, nodes: snapshot.nodes }
   }
