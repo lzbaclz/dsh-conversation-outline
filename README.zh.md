@@ -46,16 +46,21 @@
 > | `0.1.2` 及更早 | DSH `0.1.0-rc.x`（Chat 节点图还在 `snapshot.chat` 里） |
 
 
+> **用 DSH Desktop 桌面版？** 在应用内终端执行同样的命令、**不用写 `--profile`**
+> （会自动指向 `desktop` profile）。首次安装需要重启一次；以后升级走热更新，无需重启。
+
 **前置要求**：已安装 [DeepSeek Harness](https://github.com/deepseek-ai/DeepSeek-Harness)
 （`dsh` 命令可用）且版本 **≥ 0.1.5-rc.2**；Node.js `^22.19` 或 `>=24`；pnpm 10+。
 通过 `npx` 运行 DSH 的话，给下面命令加上 `npx -p @deepseek-ai/dsh ` 前缀。
 更老的宿主请装插件 `0.1.3`，见[兼容表](docs/troubleshooting.md#compatibility)。
 
 ```sh
-# 1) GitHub（现在就能装，推荐）
-dsh plugin --profile web add github:lzbaclz/dsh-conversation-outline
+# 1) npm（推荐，一条命令）
+dsh plugin --profile web add @chestnut23/dsh-conversation-outline
 
-# 2) npm（发布在你自己的 scope 下；无 scope 的同名包属于另一个无关项目，
+# 2) GitHub（最新提交，无需构建步骤）
+dsh plugin --profile web add github:lzbaclz/dsh-conversation-outline
+#    注意：npm 上无 scope 的同名包属于另一个无关项目，
 #    务必安装 @chestnut23 scope）
 dsh plugin --profile web add @chestnut23/dsh-conversation-outline
 

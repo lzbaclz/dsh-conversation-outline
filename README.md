@@ -49,6 +49,11 @@ a flash highlight so you cannot miss it. Bilingual zh-CN / en.
 > | `0.1.2` and earlier | DSH `0.1.0-rc.x` (the Chat node graph still lived in `snapshot.chat`) |
 
 
+> **Using the DSH Desktop app?** Run the same command in the app's built-in
+> terminal **without `--profile`** — it targets the `desktop` profile
+> automatically. The first install needs one restart of that DSH; later upgrades
+> hot-reload (no restart).
+
 **Prerequisites**: [DeepSeek Harness](https://github.com/deepseek-ai/DeepSeek-Harness)
 (`dsh` available) **≥ 0.1.5-rc.2**; Node.js `^22.19` or `>=24`; pnpm 10+.
 If you run DSH via `npx`, prefix the commands with `npx -p @deepseek-ai/dsh `.
@@ -56,12 +61,11 @@ On an older host, use plugin `0.1.3` — see the
 [compatibility table](docs/troubleshooting.md#compatibility).
 
 ```sh
-# 1) GitHub (works right now — recommended)
-dsh plugin --profile web add github:lzbaclz/dsh-conversation-outline
-
-# 2) npm (published under our own scope; the unscoped name belongs to an
-#    unrelated project — always install the @chestnut23 scope)
+# 1) npm (recommended — one command)
 dsh plugin --profile web add @chestnut23/dsh-conversation-outline
+
+# 2) GitHub (latest commit, no build step needed)
+dsh plugin --profile web add github:lzbaclz/dsh-conversation-outline
 
 # 3) from source (local development)
 git clone https://github.com/lzbaclz/dsh-conversation-outline.git
