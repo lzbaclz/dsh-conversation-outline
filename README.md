@@ -41,6 +41,12 @@ a flash highlight so you cannot miss it. Bilingual zh-CN / en.
 
 ## Install
 
+> **Requirements**: DSH ≥ `0.1.5-rc.2` (the current `next` channel / the DSH
+> Desktop app). The 0.1.5 line moved the Chat node graph into a session-scoped
+> store, so older hosts need the previous plugin release (see the version table
+> below).
+
+
 **Prerequisites**: [DeepSeek Harness](https://github.com/deepseek-ai/DeepSeek-Harness)
 (`dsh` available) **≥ 0.1.5-rc.2**; Node.js `^22.19` or `>=24`; pnpm 10+.
 If you run DSH via `npx`, prefix the commands with `npx -p @deepseek-ai/dsh `.
@@ -79,6 +85,17 @@ dsh plugin --profile web list
 
 Upgrade with the same `add` command (optionally pin a version:
 `@chestnut23/dsh-conversation-outline@0.1.4`).
+
+### Upgrade & hot reload
+
+```sh
+dsh plugin --profile web add @chestnut23/dsh-conversation-outline@latest   # fetch the new version
+```
+
+The DSH client-plugin HMR chain watches plugin bundles and reloads them: after an
+upgrade you normally need neither an app restart nor a page refresh. Every side
+effect (style tag, locale dictionaries, slot registrations) is owned by the plugin
+fiber, so a hot reload never leaves stale code behind.
 
 ## Usage
 

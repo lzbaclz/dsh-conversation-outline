@@ -38,6 +38,11 @@
 
 ## 安装
 
+> **环境要求**：DSH ≥ `0.1.5-rc.2`（当前 `next` 通道 / DSH Desktop 桌面版）。
+> 0.1.5 把 Chat 节点图搬进了会话级 store，更早的宿主请使用上一个版本
+> （见下方版本对照表）。
+
+
 **前置要求**：已安装 [DeepSeek Harness](https://github.com/deepseek-ai/DeepSeek-Harness)
 （`dsh` 命令可用）且版本 **≥ 0.1.5-rc.2**；Node.js `^22.19` 或 `>=24`；pnpm 10+。
 通过 `npx` 运行 DSH 的话，给下面命令加上 `npx -p @deepseek-ai/dsh ` 前缀。
