@@ -94,10 +94,15 @@ Upgrade with the same `add` command (optionally pin a version:
 dsh plugin --profile web add @chestnut23/dsh-conversation-outline@latest   # fetch the new version
 ```
 
-The DSH client-plugin HMR chain watches plugin bundles and reloads them: after an
-upgrade you normally need neither an app restart nor a page refresh. Every side
-effect (style tag, locale dictionaries, slot registrations) is owned by the plugin
-fiber, so a hot reload never leaves stale code behind.
+The DSH composition always mounts the `dsh-client-hmr` chain, which watches
+installed plugin bundles and reloads them:
+
+- **Upgrading an installed plugin** (same entry, new file content) is hot — no app
+  restart, usually not even a page refresh.
+- **Installing a brand-new plugin** (a new roster entry) needs one DSH restart.
+
+Every side effect (style tag, locale dictionaries, slot registrations) is owned by
+the plugin fiber, so a hot reload never leaves stale code behind.
 
 ## Usage
 

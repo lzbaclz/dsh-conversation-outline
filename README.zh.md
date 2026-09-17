@@ -103,15 +103,18 @@ pnpm build       # tsc(host) → tsc(client) → tsdown 打包 lib/client.js
 pnpm verify      # 离线冒烟：manifest/exports/patch/产物形状 + 纯逻辑断言
 ```
 
-`pnpm typecheck` 依赖 `@deepseek-ai/*` 包里的 `lib/types/**`。部分安装形态下这些包
-**不带声明文件**（Electron 内置副本会裁掉），npm 的 rc 通道发布的类型面也偏薄——这时
-typecheck 会报「找不到模块」，但**不影响构建与运行时**。正规做法是让 profile 里的
-`@deepseek-ai/*` 指向 DSH 源码 checkout；无论类型环境如何，`pnpm verify` 都会覆盖
-与宿主契约相关的逻辑断言。
+类型面由 **devDependencies 里钉死版本的 `@deepseek-ai/*` 0.1.5-rc.2 包**提供（npm 上有
+完整 `lib/types/**`）。注意 DSH Desktop 应用内置的副本**裁掉了声明文件**，所以不要把
+类型指到 Electron 的 `node_modules`；类型版本与运行时版本保持一致，才能真正校验适配。
 
-纯客户端改动可热更新：`pnpm exec tsdown --watch` 持续重写 `lib/client.js`，DSH 的客户端
-HMR 链（或简单刷新页面）即可生效。host / manifest 改动需要重启服务。scratch profile
-测试配方：[docs/implementation-spec.md §4.2](docs/implementation-spec.md)。
+**热更新**：DSH 组合常驻 `dsh-client-hmr` 链（实测桌面版组合 `- id: client-hmr`，未禁用），
+它监听已安装插件 bundle 的变化并自动重载：
+
+- **升级已装插件** → 热更新，无需重启应用，页面通常自动生效（开发时 `pnpm exec tsdown --watch`
+  改完即生效；手动 `pnpm build` 后刷新页面亦可）
+- **首次新增插件**（名册新增条目）→ 需要重启一次 DSH 服务
+
+scratch profile 测试配方：[docs/implementation-spec.md §4.2](docs/implementation-spec.md)。
 
 ## 一起聊聊
 
