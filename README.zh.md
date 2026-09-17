@@ -71,7 +71,7 @@ dsh plugin --profile web add "link:$(pwd)"
 dsh plugin --profile web list
 ```
 
-升级用同一条 `add` 命令（可钉版本：`@chestnut23/dsh-conversation-outline@0.1.2`）。
+升级用同一条 `add` 命令（可钉版本：`@chestnut23/dsh-conversation-outline@0.1.3`）。
 
 ## 使用
 
@@ -93,6 +93,12 @@ pnpm typecheck   # host + client 双 tsc program
 pnpm build       # tsc(host) → tsc(client) → tsdown 打包 lib/client.js
 pnpm verify      # 离线冒烟：manifest/exports/patch/产物形状 + 纯逻辑断言
 ```
+
+`pnpm typecheck` 依赖 `@deepseek-ai/*` 包里的 `lib/types/**`。部分安装形态下这些包
+**不带声明文件**（Electron 内置副本会裁掉），npm 的 rc 通道发布的类型面也偏薄——这时
+typecheck 会报「找不到模块」，但**不影响构建与运行时**。正规做法是让 profile 里的
+`@deepseek-ai/*` 指向 DSH 源码 checkout；无论类型环境如何，`pnpm verify` 都会覆盖
+与宿主契约相关的逻辑断言。
 
 纯客户端改动可热更新：`pnpm exec tsdown --watch` 持续重写 `lib/client.js`，DSH 的客户端
 HMR 链（或简单刷新页面）即可生效。host / manifest 改动需要重启服务。scratch profile

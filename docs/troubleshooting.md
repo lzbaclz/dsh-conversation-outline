@@ -1,5 +1,35 @@
 # Troubleshooting
 
+## The rail is missing entirely, and the console shows a slot error
+
+Since 0.1.3 the plugin reads the Chat node graph from the session-scoped Chat store
+(`uiConversation…target('chat')`), which is where DSH ≥ 0.1.5-rc.2 keeps it, and falls
+back to `ConversationSnapshot.chat` for older builds.
+
+Before 0.1.3 the plugin read `snapshot.chat` unconditionally. On DSH versions that no
+longer carry it, that threw on every render and the shell's slot error boundary replaced
+the whole overlay entry with an empty `[data-slot-error="shell.overlay"]` div — the rail
+simply never appeared, with no visible error:
+
+```
+TypeError: can't access property "order", snapshot.chat is undefined
+slot entry crashed in 'shell.overlay'
+```
+
+Fix: update the plugin to **0.1.3 or later**. To confirm what your host is running:
+
+```sh
+dsh --version          # the CLI/app version
+```
+
+If you are on an older host and cannot update, pin the plugin to `0.1.2` (that release
+still expects the nested `chat` object). Do not mix: 0.1.3 works on both generations.
+
+Note: on a host that has its own turn navigation rail, that built-in rail (one tick per
+turn, dark bar = current turn) sits in the same edge and can be mistaken for this
+plugin's rail. The plugin's rail is the one whose hover/click opens a panel with a search
+box and a question list.
+
 ## I installed but see nothing
 
 1. **Restart the DSH Web service** — the plugin roster is cached at boot. Installing

@@ -151,6 +151,10 @@ if (existsSync(clientBundle)) {
     /data-chat-anchor-key/.test(text) && /data-chat-flow-key/.test(text),
   )
   check('escape / outside click releases the pin', /mousedown/.test(text) && /Escape/.test(text))
+  check(
+    'bundle resolves the session-scoped Chat store (0.1.5 contract)',
+    /uiConversation/.test(text) && /"chat"/.test(text),
+  )
 } else {
   skip('rail interaction contract (lib/client.js not built yet)')
 }
@@ -184,6 +188,7 @@ if (existsSync(outlineJs)) {
     filterQuestions,
     formatTime,
     isJumpTargetRow,
+    resolveOutlineFlow,
   } = await import(pathToFileURL(outlineJs).href)
 
   // flatten: joins text blocks, replaces image blocks with a placeholder,
@@ -212,6 +217,51 @@ if (existsSync(outlineJs)) {
   check('collectQuestions keeps user+steering in flow order, skips empty text', collected.length === 3, `count=${collected.length}`)
   check('collectQuestions extracts turn numbers (turn + step)', collected[0]?.turn === 1 && collected[1]?.turn === 2 && collected[2]?.turn === 2, JSON.stringify(collected.map((i) => i.turn)))
   check('collectQuestions flattens question text', collected[1]?.text === 'second question', JSON.stringify(collected[1]?.text))
+
+  // --- both generations of the host contract -------------------------------
+  // 0.1.5-rc.2 moved the Chat node graph out of ConversationSnapshot into a
+  // session-scoped store: the very same snapshot that used to nest `chat` now
+  // carries neither `order` nor `nodes`. Reading `snapshot.chat.order`
+  // unconditionally threw inside the slot and took the rail down with it, so
+  // both shapes (and the empty one) must be handled without throwing.
+  const flatFixture = {
+    order: fixture.chat.order,
+    nodes: fixture.chat.nodes,
+    hasMore: false,
+    loadingOlder: false,
+  }
+  const flatCollected = collectQuestions(flatFixture)
+  check(
+    'collectQuestions reads the flat 0.1.5 Chat store shape',
+    flatCollected.length === 3 && flatCollected[1]?.text === 'second question',
+    `count=${flatCollected.length}`,
+  )
+  check(
+    'both contract generations produce identical items',
+    JSON.stringify(flatCollected) === JSON.stringify(collected),
+  )
+  check(
+    'resolveOutlineFlow prefers the nested chat object',
+    resolveOutlineFlow(fixture)?.order === fixture.chat.order &&
+      resolveOutlineFlow(flatFixture)?.nodes === flatFixture.nodes,
+  )
+
+  // The crash regression itself: a session snapshot with no chat at all.
+  let crashed = false
+  let empty = []
+  try {
+    empty = collectQuestions({ sessionId: 's1', blank: true })
+  } catch {
+    crashed = true
+  }
+  check('a snapshot without any chat shape returns [] instead of throwing', crashed === false && empty.length === 0)
+  check(
+    'resolveOutlineFlow rejects malformed shapes',
+    resolveOutlineFlow(undefined) === undefined &&
+      resolveOutlineFlow(null) === undefined &&
+    resolveOutlineFlow({}) === undefined &&
+    resolveOutlineFlow({ order: [] }) === undefined,
+  )
 
   const filtered = filterQuestions(collected, 'SECOND')
   check('filterQuestions is case-insensitive substring', filtered.length === 1 && filtered[0]?.key === 'u2', filtered.map((i) => i.key).join(','))

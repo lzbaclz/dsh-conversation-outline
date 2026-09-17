@@ -8,7 +8,7 @@ import {
 } from 'react'
 import type { ReactElement } from 'react'
 import type { GlobalStandardProps, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
-import type { ConversationSnapshot, ISessions } from '@deepseek-ai/dsh-client-runtime/client'
+import type { ISessions } from '@deepseek-ai/dsh-client-runtime/client'
 import { NS } from './locales.ts'
 import {
   collectQuestions,
@@ -16,29 +16,75 @@ import {
   formatTime,
   isJumpTargetRow,
 } from './outline.ts'
+import type { OutlineSnapshotLike } from './outline.ts'
 
 /**
  * Conversation-outline rail + hover panel (implementation-spec §2.1/§2.2,
  * revised per user feedback): NO top-right badge — instead a thin, always-
  * visible right-edge rail (one bar per question, like a conversation minimap).
  * Hovering the rail expands a preview panel listing each question's opening
- * words (single-line truncated); clicking a bar or a row jumps to that message.
+ * words (single-line truncated); clicking the rail or a bar opens/pins it, and
+ * clicking a row jumps to that message.
  *
  * Rendered by the shell as a `shell.overlay` entry (frame-wide, click-through
- * layer). Props come from the composed four-share contract — the global
- * standard kit (`useSessions`), the injected sessions service face, and the
- * typed `t` seat for our locale namespace.
+ * layer). Props come from the composed contract — the global standard kit
+ * (`useSessions`) and the typed `t` seat for our locale namespace — plus the
+ * Chat feed the registration resolves per session (see §data sources).
  */
 export interface OutlinePanelProps extends GlobalStandardProps {
-  /** The sessions service face, injected by the registration. */
+  /**
+   * The sessions service face, injected by the registration: resolves the
+   * binding (its `.session` face carries pagination) and, through its context,
+   * the session's Chat store.
+   */
   sessions: ISessions
   /** Typed translate seat for our namespace (declared via `locale: NS`). */
   t: TranslateNS<typeof NS>
 }
 
-/** Stable getSnapshot value while no session is current (uSES contract). */
-const NO_SESSION: ConversationSnapshot | null = null
+/** One observable Chat source: props read through uSES, updates pushed. */
+export interface OutlineChatFeed {
+  getSnapshot: () => OutlineSnapshotLike
+  subscribe: (onChange: () => void) => () => void
+}
 
+/**
+ * Stable getSnapshot value while no session (or no feed) is current (uSES
+ * contract): an empty flow, so the rail renders nothing instead of throwing on
+ * a shape the host did not provide.
+ */
+const NO_FLOW: OutlineSnapshotLike = { order: [] }
+
+/**
+ * Resolve one observable Chat source out of a session binding for the two
+ * contract generations DSH shipped:
+ *
+ * - `binding.ctx.uiConversation.binding(binding).target('chat')` — 0.1.5-rc.2
+ *   and later, where the Chat node graph is a session-scoped store and
+ *   `ConversationSnapshot` no longer carries `chat`;
+ * - the session face itself — earlier builds, whose snapshot still exposes
+ *   `chat` (and which `resolveOutlineFlow` prefers when it is present).
+ *
+ * Reading the provider off `binding.ctx` rather than the root context keeps it
+ * correct under any bus arrangement, and a host without the service degrades to
+ * the legacy face instead of crashing the slot.
+ */
+export function resolveChatFeed(
+  session: OutlineChatFeed | undefined,
+  binding: { ctx?: { uiConversation?: unknown } } | undefined,
+): OutlineChatFeed | undefined {
+  if (session === undefined || binding === undefined) return undefined
+  const uiConversation = binding.ctx?.uiConversation as
+    | { binding?: (source: unknown) => { target?: (name: string) => OutlineChatFeed | undefined } }
+    | undefined
+  const chat = uiConversation?.binding?.(session)?.target?.('chat')
+  if (chat !== undefined) return chat
+  // Legacy fallback: on builds whose ConversationSnapshot still nests `chat`,
+  // the session face itself is the observable carrying it. The cast is
+  // deliberate — that generation is not describable by this build's types, and
+  // `resolveOutlineFlow` reads whatever shape it finds defensively.
+  return session as unknown as OutlineChatFeed
+}
 const JUMP_HEADROOM = 96
 const JUMP_TIMEOUT_MS = 1500
 const FLASH_MS = 1900
@@ -88,21 +134,37 @@ function scheduleTimeout(
   timeoutRef.current.push(id)
 }
 
-export function OutlinePanel({ sessions, useSessions, t }: OutlinePanelProps): ReactElement | null {
+export function OutlinePanel({
+  sessions,
+  useSessions,
+  t,
+}: OutlinePanelProps): ReactElement | null {
   const current = useSessions((s) => s.current)
   const session = current ? sessions.binding(current)?.session : undefined
 
-  // Conversation snapshot subscription (spec §1.5): live updates while the
-  // session runs, load-older, blank detection — all ride this one store.
+  // Question flow: the Chat store (0.1.5-rc.2+) or the session snapshot's own
+  // `chat` (earlier builds). Pagination still lives on the session face in both.
+  const chat = useMemo(
+    () => resolveChatFeed(session, current ? sessions.binding(current) : undefined),
+    [session, sessions, current],
+  )
   const subscribe = useCallback(
-    (onChange: () => void) => (session ? session.subscribe(onChange) : () => {}),
-    [session],
+    (onChange: () => void) => (chat ? chat.subscribe(onChange) : () => {}),
+    [chat],
   )
   const getSnapshot = useCallback(
-    () => (session ? session.getSnapshot() : NO_SESSION),
-    [session],
+    () => (chat ? chat.getSnapshot() : NO_FLOW),
+    [chat],
   )
-  const snapshot = useSyncExternalStore(subscribe, getSnapshot)
+  const chatSnapshot = useSyncExternalStore(subscribe, getSnapshot)
+  const snapshot = useMemo<OutlineSnapshotLike>(
+    () => ({
+      ...chatSnapshot,
+      hasMore: session?.getSnapshot?.().hasMore ?? false,
+      loadingOlder: session?.getSnapshot?.().loadingOlder ?? false,
+    }),
+    [chatSnapshot, session],
+  )
 
   // Two independent sources for the panel being open: `pinned` is a click
   // gesture (sticky until Escape / outside click / session change), `hovered`
@@ -187,9 +249,8 @@ export function OutlinePanel({ sessions, useSessions, t }: OutlinePanelProps): R
   // timer, and the flash attribute.
   useEffect(() => clearPending, [clearPending])
 
-  const allItems = useMemo(() => (snapshot ? collectQuestions(snapshot) : []), [snapshot])
+  const allItems = useMemo(() => collectQuestions(snapshot), [snapshot])
   const items = useMemo(() => filterQuestions(allItems, query), [allItems, query])
-  const blank = snapshot?.blank ?? true
   const hasMore = snapshot?.hasMore ?? false
   const loadingOlder = snapshot?.loadingOlder ?? false
 
@@ -354,11 +415,14 @@ export function OutlinePanel({ sessions, useSessions, t }: OutlinePanelProps): R
     }
   }, [])
 
-  // No current session, or a blank session → render nothing (rail included).
-  // MUST stay below every hook: this overlay entry stays mounted across
-  // session changes, and blank flips false on the first accepted prompt, so a
-  // conditional hook would crash React (reviewer MUST-FIX #1).
-  if (!current || !session || blank) return null
+  // No current session, or a session with nothing to outline → render nothing
+  // (rail included). This is driven by the question list, not by the session's
+  // `blank` flag: the flag belongs to the conversation snapshot, while the rail
+  // is derived from the Chat flow, and a session whose nodes are not loaded yet
+  // must not take the slot down. MUST stay below every hook (this overlay entry
+  // stays mounted across session changes, so a conditional hook would crash
+  // React — reviewer MUST-FIX #1).
+  if (!current || !session || allItems.length === 0) return null
 
   // Rail bars: chronological top→bottom, capped at MAX_BARS with the overflow
   // folded into a "+N" marker (the rail is a minimap, not the full list).

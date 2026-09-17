@@ -41,12 +41,63 @@ export interface OutlineChatNode {
   }
 }
 
-/** Snapshot shape accepted by collectQuestions (subset of ConversationSnapshot). */
+/** One Chat target: the node flow and its index, nested under `chat`. */
+export interface OutlineChatLike {
+  order: readonly string[]
+  nodes: { get(key: string): OutlineChatNode | undefined }
+}
+
+/**
+ * Snapshot shape accepted by collectQuestions.
+ *
+ * Two generations of the DSH contract are accepted, because the Chat node graph
+ * moved between them:
+ *
+ * - `chat.order` / `chat.nodes` — the layout this plugin was written against,
+ *   still what `@deepseek-ai/dsh-client-runtime` exposes as
+ *   `ConversationSnapshot.chat`;
+ * - `order` / `nodes` at the top level — the session-scoped Chat store that
+ *   `@deepseek-ai/dsh-client-ui-chat` publishes from 0.1.5-rc.2 on, where
+ *   `ConversationSnapshot` no longer carries `chat` at all.
+ *
+ * Both are optional so "this session has no chat yet" is a valid input rather
+ * than a crash: the rail then has nothing to outline.
+ */
 export interface OutlineSnapshotLike {
-  chat: {
-    order: readonly string[]
-    nodes: { get(key: string): OutlineChatNode | undefined }
+  chat?: Partial<OutlineChatLike> | undefined
+  order?: readonly string[] | undefined
+  nodes?: { get(key: string): OutlineChatNode | undefined } | undefined
+  /** Older history still exists outside the loaded window (session face). */
+  hasMore?: boolean | undefined
+  /** The session face is paging older history right now. */
+  loadingOlder?: boolean | undefined
+}
+
+/** The node flow plus its index, after resolving both contract generations. */
+export interface OutlineFlow {
+  order: readonly string[]
+  nodes: { get(key: string): OutlineChatNode | undefined }
+}
+
+/**
+ * Resolve one snapshot into the flow to walk, preferring the nested `chat`
+ * object and falling back to the top-level store fields.
+ *
+ * Never throws: a snapshot carrying neither shape yields `undefined`, so the
+ * caller renders an empty rail instead of crashing its slot.
+ */
+export function resolveOutlineFlow(
+  snapshot: OutlineSnapshotLike | null | undefined,
+): OutlineFlow | undefined {
+  if (snapshot === null || snapshot === undefined) return undefined
+  const chat = snapshot.chat
+  if (chat !== undefined && Array.isArray(chat.order) && chat.nodes !== undefined) {
+    return { order: chat.order, nodes: chat.nodes }
   }
+  if (Array.isArray(snapshot.order) && snapshot.nodes !== undefined) {
+    return { order: snapshot.order, nodes: snapshot.nodes }
+  }
+  return undefined
 }
 
 /** One row of the outline: a user question (or mid-turn steer). */
@@ -90,9 +141,11 @@ function turnOf(location: OutlineChatNode['location']): number | undefined {
  * produce chronological outline items (spec §2.3).
  */
 export function collectQuestions(snapshot: OutlineSnapshotLike): OutlineItem[] {
+  const flow = resolveOutlineFlow(snapshot)
+  if (flow === undefined) return []
   const items: OutlineItem[] = []
-  for (const key of snapshot.chat.order) {
-    const node = snapshot.chat.nodes.get(key)
+  for (const key of flow.order) {
+    const node = flow.nodes.get(key)
     if (!node) continue
     if (node.kind !== 'user' && node.kind !== 'steering') continue
     const data = node.data as OutlineChatData | undefined

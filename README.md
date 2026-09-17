@@ -76,7 +76,7 @@ dsh plugin --profile web list
 ```
 
 Upgrade with the same `add` command (optionally pin a version:
-`@chestnut23/dsh-conversation-outline@0.1.2`).
+`@chestnut23/dsh-conversation-outline@0.1.3`).
 
 ## Usage
 
@@ -101,6 +101,14 @@ pnpm typecheck   # host + client dual tsc programs
 pnpm build       # tsc(host) → tsc(client) → tsdown bundles lib/client.js
 pnpm verify      # offline smoke: manifest/exports/patch/bundle shape + pure-logic asserts
 ```
+
+`pnpm typecheck` needs `lib/types/**` from the `@deepseek-ai/*` packages. Some DSH
+installations ship those packages **without** declaration files (the Electron bundle
+prunes them), and the npm `rc` channels publish a reduced type surface — in that case
+typecheck reports missing modules while the build and runtime are unaffected. The
+supported fix is to run against a DSH source checkout (or a profile whose
+`@deepseek-ai/*` links resolve to one); `pnpm verify` covers the contract-shaped logic
+either way.
 
 Client-only changes hot-reload: `pnpm exec tsdown --watch` rewrites `lib/client.js`, and
 the DSH client HMR chain (or a plain page refresh) picks it up. Host/manifest changes
