@@ -153,7 +153,23 @@ if (existsSync(clientBundle)) {
   check('escape / outside click releases the pin', /mousedown/.test(text) && /Escape/.test(text))
   check(
     'bundle resolves the session-scoped Chat store',
-    /uiConversation/.test(text) && /target\('chat'\)/.test(text),
+    /uiConversation/i.test(text) && /\(\s*['"]chat['"]\s*\)/.test(text),
+  )
+  check(
+    'bundle declares the conversation service in inject',
+    /['"]uiConversation['"]/.test(text),
+  )
+  // Comments may legitimately quote the anti-pattern; assert against code only.
+  const bundleCode = text
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^[ \t]*\/\/.*$/gm, '')
+  check(
+    // Reading a service off a foreign context throws in cordis; the service
+    // must be captured from the plugin's own ctx (0.2.0 crash class).
+    'bundle never reads uiConversation off a foreign context',
+    // A foreign read looks like `<something>.ctx.uiConversation`; the legitimate
+    // capture is a bare `ctx.uiConversation` (the plugin's own context).
+    !/\w\s*\??\.\s*ctx\s*\??\.\s*uiConversation/.test(bundleCode),
   )
   check(
     'bundle never reads the removed ConversationSnapshot.chat field',

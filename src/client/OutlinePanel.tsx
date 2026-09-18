@@ -16,7 +16,7 @@ import {
   formatTime,
   isJumpTargetRow,
 } from './outline.ts'
-import type { OutlineSnapshotLike } from './outline.ts'
+import type { OutlineChatFeed, OutlineSnapshotLike } from './outline.ts'
 
 /**
  * Conversation-outline rail + hover panel (implementation-spec §2.1/§2.2,
@@ -35,18 +35,18 @@ import type { OutlineSnapshotLike } from './outline.ts'
 export interface OutlinePanelProps {
   /**
    * The sessions service face, injected by the registration: resolves the
-   * binding (its `.session` face carries pagination) and, through its context,
-   * the session's Chat store.
+   * session binding whose `.session` face carries history pagination.
    */
   sessions: ISessions
+  /**
+   * Chat-feed resolver injected by the registration. It closes over the
+   * conversation service captured from the plugin's OWN context, because cordis
+   * refuses service reads on a foreign context and throws on undeclared ones.
+   * Tolerates `undefined` (no current session) by yielding `undefined`.
+   */
+  resolveChatFeed: (binding: unknown) => OutlineChatFeed | undefined
   /** Typed translate seat for our namespace (declared via `locale: NS`). */
   t: TranslateNS<typeof NS>
-}
-
-/** One observable Chat source: props read through uSES, updates pushed. */
-export interface OutlineChatFeed {
-  getSnapshot: () => OutlineSnapshotLike
-  subscribe: (onChange: () => void) => () => void
 }
 
 /**
@@ -56,36 +56,6 @@ export interface OutlineChatFeed {
  */
 const NO_FLOW: OutlineSnapshotLike = { order: [] }
 
-/**
- * Resolve one observable Chat source out of a session binding.
- *
- * The Chat node graph is a session-scoped store, reached exactly the way
- * `@deepseek-ai/dsh-client-ui-chat` reaches it:
- *
- * ```js
- * ctx.uiConversation.binding(binding).target('chat')  // { getSnapshot, subscribe }
- * ```
- *
- * Reading the provider off `binding.ctx` (rather than the root context) keeps
- * this correct under any bus arrangement; a host that does not offer the
- * service yields `undefined`, and the rail then renders nothing instead of
- * crashing the slot.
- */
-export function resolveChatFeed(binding: unknown): OutlineChatFeed | undefined {
-  // Structural lookup on purpose: the binding's context face is a cordis
-  // Context in 0.1.5-rc.2 (`AgentContext`), whose `uiConversation` slot the
-  // service tracker only exposes at runtime, so a structural read is the
-  // portable way to reach it without value-importing another plugin.
-  const uiConversation = (binding as { ctx?: { uiConversation?: unknown } } | undefined)
-    ?.ctx?.uiConversation as
-    | {
-        binding?: (source: unknown) => {
-          target?: (name: string) => OutlineChatFeed | undefined
-        }
-      }
-    | undefined
-  return uiConversation?.binding?.(binding)?.target?.('chat')
-}
 const JUMP_HEADROOM = 96
 const JUMP_TIMEOUT_MS = 1500
 const FLASH_MS = 1900
@@ -137,6 +107,7 @@ function scheduleTimeout(
 
 export function OutlinePanel({
   sessions,
+  resolveChatFeed,
   t,
 }: OutlinePanelProps): ReactElement | null {
   // Current-session feed: the sessions service owns it (`ISessions.list`), so
@@ -159,7 +130,7 @@ export function OutlinePanel({
 
   // Question flow: the session-scoped Chat store. History pagination lives on
   // the session face, so its two flags are merged in here.
-  const chat = useMemo(() => resolveChatFeed(binding), [binding])
+  const chat = useMemo(() => resolveChatFeed(binding), [resolveChatFeed, binding])
   const subscribe = useCallback(
     (onChange: () => void) => (chat ? chat.subscribe(onChange) : () => {}),
     [chat],

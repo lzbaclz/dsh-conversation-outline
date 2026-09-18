@@ -1,13 +1,19 @@
 /**
  * Headless DOM smoke test for the outline rail (no browser, no DSH host).
  *
- * Mounts the REAL built component (`lib/client/OutlinePanel.js`) inside jsdom
- * with a fake sessions service that speaks the DSH 0.1.5-rc.2 contract, then
- * asserts what a user would see:
+ * Hard-won constraints this harness encodes (each one was a real production
+ * crash that a permissive mock had hidden):
  *
- *   1. the rail renders one bar per user question;
- *   2. hovering the rail opens the preview panel with one row per question;
- *   3. clicking a bar reaches the jump path (scroll + flash) and closes the panel.
+ *   1. `ctx` is a GUARDED proxy — reading a service that is not declared in the
+ *      plugin's `inject` list throws (`cannot get property "x" without inject`).
+ *      The harness builds that guard, so an undeclared read fails here.
+ *   2. A foreign context is just as guarded: services must be captured from the
+ *      plugin's OWN ctx in `apply`, never read off `binding.ctx`.
+ *   3. The no-current-session state (app just opened, session list showing) must
+ *      render nothing instead of throwing — the rail mounts before any session.
+ *
+ * It therefore runs the REAL `apply()` wiring and renders the component the
+ * registration produced, instead of hand-made props.
  *
  * Run with `pnpm test:dom` (dev only; `pnpm verify` stays dependency-free).
  */
@@ -36,7 +42,27 @@ window.matchMedia ??= globalThis.matchMedia
 
 const { createRoot } = await import('react-dom/client')
 const React = (await import('react')).default
-const { OutlinePanel } = await import('../lib/client/OutlinePanel.js')
+const { apply, inject } = await import('../lib/client/index.js')
+
+// -------------------------------------------------------------- cordis guards
+/**
+ * Build a context that enforces cordis's service guard: every property read is
+ * checked against the plugin's declared `inject` list, like the real service
+ * tracker. Reading anything else throws.
+ */
+function guardedContext(services, declared) {
+  const allowed = new Set(declared)
+  return new Proxy(
+    { effect: (fn) => { const dispose = fn(); return () => { if (typeof dispose === 'function') dispose() } } },
+    {
+      get(target, property, receiver) {
+        if (typeof property === 'symbol' || property in target) return Reflect.get(target, property, receiver)
+        if (!allowed.has(property)) throw new Error(`cannot get property "${String(property)}" without inject`)
+        return services[property]
+      },
+    },
+  )
+}
 
 // ------------------------------------------------------- fake platform shapes
 const CHAT_SNAPSHOT = {
@@ -63,76 +89,115 @@ const CHAT_SNAPSHOT = {
     },
   },
 }
-
-// Snapshots must be reference-stable between changes (the uSES contract the
-// real stores honour); returning a fresh object per call loops React.
-const chatFeed = {
-  getSnapshot: () => CHAT_SNAPSHOT,
-  subscribe: () => () => {},
-}
-
+const chatFeed = { getSnapshot: () => CHAT_SNAPSHOT, subscribe: () => () => {} }
 const SESSION_SNAPSHOT = { hasMore: false, loadingOlder: false }
-const LIST_SNAPSHOT = { current: 's1' }
-
 const sessionBinding = {
   sessionId: 's1',
   session: { getSnapshot: () => SESSION_SNAPSHOT },
-  ctx: { uiConversation: { binding: () => ({ target: (name) => (name === 'chat' ? chatFeed : undefined) }) } },
-}
-
-const sessions = {
-  list: { getSnapshot: () => LIST_SNAPSHOT, subscribe: () => () => {} },
-  binding: (id) => (id === 's1' ? sessionBinding : undefined),
-  open: () => {},
+  // A foreign context that THROWS on any read: the plugin must never reach a
+  // service through it (that was bug class #2).
+  ctx: new Proxy({}, { get(_target, property) { throw new Error(`foreign context read: ${String(property)} — capture services from the plugin's own ctx instead`) } }),
 }
 
 const t = (key, params) => (params?.count !== undefined ? `${key}:${params.count}` : key)
 
-// --------------------------------------------------------------- mount + assert
-const container = document.getElementById('root')
-const root = createRoot(container)
-root.render(React.createElement(OutlinePanel, { sessions, t }))
-await new Promise((resolve) => setTimeout(resolve, 50))
+/** One fake host: sessions list state + optional conversation service. */
+function host({ current, withUiConversation = true } = {}) {
+  const registered = { options: null, component: null }
+  const listSnapshot = { current }
+  const services = {
+    sessions: {
+      // Stable snapshot reference: uSES re-renders forever on a fresh object.
+      list: { getSnapshot: () => listSnapshot, subscribe: () => () => {} },
+      binding: (id) => (id === 's1' ? sessionBinding : undefined),
+      open: () => {},
+    },
+    uiConversation: withUiConversation
+      ? { binding: () => ({ target: (name) => (name === 'chat' ? chatFeed : undefined) }) }
+      : undefined,
+    locale: { register: () => () => {}, bind: () => t },
+    slots: {
+      inject: (_name, callback) => callback(),
+      register: (options, component) => {
+        registered.options = options
+        registered.component = component
+        return () => {}
+      },
+    },
+  }
+  return { services, registered }
+}
 
 const results = []
 const check = (name, ok, detail = '') => {
   results.push({ name, ok, detail })
   console.log(`  ${ok ? 'PASS' : 'FAIL'} ${name}${detail ? ` — ${detail}` : ''}`)
 }
+const settle = () => new Promise((resolve) => setTimeout(resolve, 50))
 
-const rail = container.querySelector('.dso-rail')
-check('rail renders', rail !== null)
-const bars = container.querySelectorAll('.dso-bar')
-check('one bar per question', bars.length === 2, `bars=${bars.length}`)
-
-// Hover the rail: React listens for mouseenter through its synthetic system.
-rail?.dispatchEvent(new window.MouseEvent('mouseover', { bubbles: true }))
-rail?.dispatchEvent(new window.MouseEvent('mouseenter', { bubbles: false }))
-await new Promise((resolve) => setTimeout(resolve, 50))
-
-const panel = container.querySelector('.dso-panel')
-check('hover opens the preview panel', panel !== null)
-const rows = container.querySelectorAll('.dso-row')
-check('panel lists every question', rows.length === 2, `rows=${rows.length}`)
-check('row shows the question opening words', rows[0]?.textContent?.includes('第一个问题') === true, rows[0]?.textContent?.trim().slice(0, 40))
-
-// Click the first bar: the jump path must find the chat row, scroll and flash.
-const scrollport = document.querySelector('[data-conversation-scroll]')
-let scrolled = null
-scrollport.scrollTo = (opts) => {
-  scrolled = opts
+/** Run apply() against a guarded ctx, then render what it registered. */
+async function mount(hostSpec) {
+  const { services, registered } = host(hostSpec)
+  apply(guardedContext(services, inject))
+  const container = document.getElementById('root')
+  container.innerHTML = ''
+  const injected = registered.options.inject ? registered.options.inject() : {}
+  const root = createRoot(container)
+  root.render(React.createElement(registered.component, { ...injected, t }))
+  await settle()
+  return { container, root }
 }
-const row = document.createElement('div')
-row.setAttribute('data-chat-anchor-key', '13:input-message<u1>')
-document.body.appendChild(row)
-bars[0]?.dispatchEvent(new window.MouseEvent('click', { bubbles: true }))
-await new Promise((resolve) => setTimeout(resolve, 80))
 
-check('clicking a bar scrolls the transcript', scrolled !== null, scrolled ? `top=${Math.round(scrolled.top)}` : 'scrollTo not called')
-check('clicking a bar flashes the target row', row.hasAttribute('data-dsh-outline-flash'))
-check('jump closes the panel', container.querySelector('.dso-panel') === null)
+console.log(`inject declaration: ${JSON.stringify(inject)}`)
+check('declares the conversation service it reads', inject.includes('uiConversation'))
+check('declares the services the entry touches', ['slots', 'sessions', 'locale'].every((s) => inject.includes(s)))
 
-root.unmount()
+// ------------------------------------------- 1. no current session (app just opened)
+{
+  const { container, root } = await mount({ current: undefined })
+  check('no current session → renders nothing, no throw', container.querySelector('.dso-rail') === null && container.children.length === 0)
+  root.unmount()
+}
+
+// ------------------------------------------- 2. current session → rail + jump
+{
+  const { container, root } = await mount({ current: 's1' })
+  const rail = container.querySelector('.dso-rail')
+  check('rail renders for the current session', rail !== null)
+  const bars = container.querySelectorAll('.dso-bar')
+  check('one bar per question', bars.length === 2, `bars=${bars.length}`)
+
+  rail?.dispatchEvent(new window.MouseEvent('mouseover', { bubbles: true }))
+  rail?.dispatchEvent(new window.MouseEvent('mouseenter', { bubbles: false }))
+  await settle()
+  check('hover opens the preview panel', container.querySelector('.dso-panel') !== null)
+  const rows = container.querySelectorAll('.dso-row')
+  check('panel lists every question', rows.length === 2, `rows=${rows.length}`)
+  check('row shows the question opening words', rows[0]?.textContent?.includes('第一个问题') === true, rows[0]?.textContent?.trim().slice(0, 24))
+
+  const scrollport = document.querySelector('[data-conversation-scroll]')
+  let scrolled = null
+  scrollport.scrollTo = (opts) => {
+    scrolled = opts
+  }
+  const row = document.createElement('div')
+  row.setAttribute('data-chat-anchor-key', '13:input-message<u1>')
+  document.body.appendChild(row)
+  bars[0]?.dispatchEvent(new window.MouseEvent('click', { bubbles: true }))
+  await settle()
+  check('clicking a bar scrolls the transcript', scrolled !== null, scrolled ? `top=${Math.round(scrolled.top)}` : 'scrollTo not called')
+  check('clicking a bar flashes the target row', row.hasAttribute('data-dsh-outline-flash'))
+  check('jump closes the panel', container.querySelector('.dso-panel') === null)
+  root.unmount()
+}
+
+// ------------------------------------------- 3. host without the service at all
+{
+  const { container, root } = await mount({ current: 's1', withUiConversation: false })
+  check('host without uiConversation → nothing rendered, no throw', container.querySelector('.dso-rail') === null)
+  root.unmount()
+}
+
 const failed = results.filter((r) => !r.ok)
 console.log(`\n${failed.length === 0 ? 'DOM SMOKE: all checks passed ✔' : `DOM SMOKE: ${failed.length} check(s) FAILED ✘`}`)
 process.exit(failed.length === 0 ? 0 : 1)

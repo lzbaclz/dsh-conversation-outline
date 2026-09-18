@@ -2,7 +2,7 @@ import type { ReactElement } from 'react';
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots';
 import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client';
 import { NS } from './locales.ts';
-import type { OutlineSnapshotLike } from './outline.ts';
+import type { OutlineChatFeed } from './outline.ts';
 /**
  * Conversation-outline rail + hover panel (implementation-spec §2.1/§2.2,
  * revised per user feedback): NO top-right badge — instead a thin, always-
@@ -20,32 +20,17 @@ import type { OutlineSnapshotLike } from './outline.ts';
 export interface OutlinePanelProps {
     /**
      * The sessions service face, injected by the registration: resolves the
-     * binding (its `.session` face carries pagination) and, through its context,
-     * the session's Chat store.
+     * session binding whose `.session` face carries history pagination.
      */
     sessions: ISessions;
+    /**
+     * Chat-feed resolver injected by the registration. It closes over the
+     * conversation service captured from the plugin's OWN context, because cordis
+     * refuses service reads on a foreign context and throws on undeclared ones.
+     * Tolerates `undefined` (no current session) by yielding `undefined`.
+     */
+    resolveChatFeed: (binding: unknown) => OutlineChatFeed | undefined;
     /** Typed translate seat for our namespace (declared via `locale: NS`). */
     t: TranslateNS<typeof NS>;
 }
-/** One observable Chat source: props read through uSES, updates pushed. */
-export interface OutlineChatFeed {
-    getSnapshot: () => OutlineSnapshotLike;
-    subscribe: (onChange: () => void) => () => void;
-}
-/**
- * Resolve one observable Chat source out of a session binding.
- *
- * The Chat node graph is a session-scoped store, reached exactly the way
- * `@deepseek-ai/dsh-client-ui-chat` reaches it:
- *
- * ```js
- * ctx.uiConversation.binding(binding).target('chat')  // { getSnapshot, subscribe }
- * ```
- *
- * Reading the provider off `binding.ctx` (rather than the root context) keeps
- * this correct under any bus arrangement; a host that does not offer the
- * service yields `undefined`, and the rail then renders nothing instead of
- * crashing the slot.
- */
-export declare function resolveChatFeed(binding: unknown): OutlineChatFeed | undefined;
-export declare function OutlinePanel({ sessions, t, }: OutlinePanelProps): ReactElement | null;
+export declare function OutlinePanel({ sessions, resolveChatFeed, t, }: OutlinePanelProps): ReactElement | null;

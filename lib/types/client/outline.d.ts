@@ -73,6 +73,14 @@ export interface OutlineSnapshotLike {
     /** The session face is paging older history right now. */
     loadingOlder?: boolean | undefined;
 }
+/**
+ * One observable Chat source: the rail reads it through `useSyncExternalStore`
+ * (reference-stable snapshots) and receives change notifications through it.
+ */
+export interface OutlineChatFeed {
+    getSnapshot: () => OutlineSnapshotLike;
+    subscribe: (onChange: () => void) => () => void;
+}
 /** The node flow plus its index, after validating the store snapshot. */
 export interface OutlineFlow {
     order: readonly string[];
