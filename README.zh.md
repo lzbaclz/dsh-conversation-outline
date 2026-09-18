@@ -87,6 +87,19 @@ dsh plugin --profile web list
 
 升级用同一条 `add` 命令（可钉版本：`@chestnut23/dsh-conversation-outline@0.1.4`）。
 
+## 与官方「Turn navigation」轨道的关系
+
+DSH 0.1.5 自带一条右边缘轨道（`TurnNavigatorRail`），它按 **turn** 打刻度、标签写作
+`Turn N`——其 prompt 预览字段是空的，所以**从不显示你的提问原文**（实测某会话 72 个
+turn 却只有 2 个提问），而且刻度仅 20×10px、无文字，无法分辨哪条对应哪个问题。
+
+因此本插件加载期间会**隐藏那条轨道**（通过 `nav[aria-label]` 识别，另有面向视图重建的
+结构化兜底，并用 MutationObserver 持续补标记），由本插件接管右边缘。该行为完全可逆：
+
+- 卸载插件会自动恢复官方轨道；
+- 想让它与本插件并存：在 `<html>` 上加 `data-dsh-outline-keep-turn-nav`，例如在浏览器
+  控制台执行 `document.documentElement.setAttribute('data-dsh-outline-keep-turn-nav','')`。
+
 ## 使用
 
 装好重启后，打开任何一个已有消息的会话，右侧边缘会出现细竖条：悬停预览问题；**点击细条

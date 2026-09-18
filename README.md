@@ -108,6 +108,23 @@ installed plugin bundles and reloads them:
 Every side effect (style tag, locale dictionaries, slot registrations) is owned by
 the plugin fiber, so a hot reload never leaves stale code behind.
 
+## Relationship to the built-in Turn navigation rail
+
+DSH 0.1.5 renders its own right-edge rail (`TurnNavigatorRail`) that marks every
+**turn** and labels its ticks `Turn N`: its prompt-preview field is empty, so the
+ticks never show what you asked (a measured session had 72 turns and 2
+questions), and 20x10px text-less ticks cannot say which question is which.
+
+While this plugin is loaded it therefore hides that rail (identified by
+`nav[aria-label]`, plus a structural fallback for rebuilt views; the marker is
+re-applied through a MutationObserver) and owns the right edge itself. The change
+is fully reversible:
+
+- unloading the plugin restores the built-in rail automatically;
+- keep it visible alongside this plugin with
+  `<html data-dsh-outline-keep-turn-nav>` (e.g. from a browser console:
+  `document.documentElement.setAttribute('data-dsh-outline-keep-turn-nav','')`).
+
 ## Usage
 
 Install, restart, open any session that already has messages — a thin strip appears on

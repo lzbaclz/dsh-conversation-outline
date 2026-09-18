@@ -14,6 +14,7 @@ import { OutlinePanel } from './OutlinePanel.tsx'
 import type { OutlineChatFeed } from './outline.ts'
 import { NS, dictionaries } from './locales.ts'
 import { injectStyle } from './styles.ts'
+import { hideOfficialTurnNavigation } from './official-nav.ts'
 
 /**
  * Client entry (implementation-spec §1.1/§2.4): the browser half of the
@@ -51,6 +52,16 @@ export function apply(ctx: ClientContext): void {
 
   // Panel CSS as an HMR-safe <style data-plugin> tag (effect-owned).
   injectStyle(ctx)
+
+  // Take over the right edge: hide DSH's built-in Turn navigation rail while
+  // this plugin is loaded (reversible, with an opt-out root attribute). Owned by
+  // the fiber, so unloading the plugin restores the built-in rail.
+  if (typeof document !== 'undefined') {
+    ctx.effect(
+      () => hideOfficialTurnNavigation(document),
+      'dsh-conversation-outline: hide the built-in turn navigation',
+    )
+  }
 
   // Right-edge rail + hover panel in the frame-wide overlay layer.
   // slots.inject waits for the layout's declaration of `shell.overlay` and

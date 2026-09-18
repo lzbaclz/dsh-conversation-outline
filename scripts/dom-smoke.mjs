@@ -33,6 +33,7 @@ globalThis.HTMLElement = window.HTMLElement
 globalThis.Element = window.Element
 globalThis.Node = window.Node
 globalThis.DOMRect = window.DOMRect
+globalThis.MutationObserver = window.MutationObserver
 globalThis.requestAnimationFrame = window.requestAnimationFrame.bind(window)
 globalThis.cancelAnimationFrame = window.cancelAnimationFrame.bind(window)
 globalThis.matchMedia =
@@ -50,10 +51,17 @@ const { apply, inject } = await import('../lib/client/index.js')
  * checked against the plugin's declared `inject` list, like the real service
  * tracker. Reading anything else throws.
  */
-function guardedContext(services, declared) {
+function guardedContext(services, declared, disposers = []) {
   const allowed = new Set(declared)
   return new Proxy(
-    { effect: (fn) => { const dispose = fn(); return () => { if (typeof dispose === 'function') dispose() } } },
+    {
+      effect: (fn) => {
+        const dispose = fn()
+        const disposeAll = () => { if (typeof dispose === 'function') dispose() }
+        disposers.push(disposeAll)
+        return disposeAll
+      },
+    },
     {
       get(target, property, receiver) {
         if (typeof property === 'symbol' || property in target) return Reflect.get(target, property, receiver)
@@ -138,14 +146,15 @@ const settle = () => new Promise((resolve) => setTimeout(resolve, 50))
 /** Run apply() against a guarded ctx, then render what it registered. */
 async function mount(hostSpec) {
   const { services, registered } = host(hostSpec)
-  apply(guardedContext(services, inject))
+  const disposers = []
+  apply(guardedContext(services, inject, disposers))
   const container = document.getElementById('root')
   container.innerHTML = ''
   const injected = registered.options.inject ? registered.options.inject() : {}
   const root = createRoot(container)
   root.render(React.createElement(registered.component, { ...injected, t }))
   await settle()
-  return { container, root }
+  return { container, root, disposers }
 }
 
 console.log(`inject declaration: ${JSON.stringify(inject)}`)
@@ -196,6 +205,56 @@ check('declares the services the entry touches', ['slots', 'sessions', 'locale']
   const { container, root } = await mount({ current: 's1', withUiConversation: false })
   check('host without uiConversation → nothing rendered, no throw', container.querySelector('.dso-rail') === null)
   root.unmount()
+}
+
+// ------------------------------------------- 4. built-in Turn navigation rail
+{
+  const officialNav = document.createElement('nav')
+  officialNav.setAttribute('aria-label', 'Turn navigation')
+  officialNav.setAttribute('class', 'abcdef_slot')
+  document.body.appendChild(officialNav)
+
+  const first = await mount({ current: 's1' })
+  check(
+    'built-in Turn navigation rail is hidden while the plugin is loaded',
+    officialNav.hasAttribute('data-dsh-outline-hides-official-nav'),
+  )
+  check(
+    'the plugin never marks its own rail as the built-in one',
+    first.container.querySelector('.dso-rail')?.hasAttribute('data-dsh-outline-hides-official-nav') !== true,
+  )
+  // A rebuilt view replaces the subtree: the observer must re-mark the new node
+  // (this is what a hashed-class-only rule cannot guarantee).
+  const rebuiltNav = document.createElement('nav')
+  rebuiltNav.setAttribute('aria-label', 'Turn navigation')
+  rebuiltNav.setAttribute('class', 'zzzzzz_slot')
+  document.body.appendChild(rebuiltNav)
+  await settle()
+  await settle()
+  check(
+    'a rebuilt built-in rail is re-marked by the observer',
+    rebuiltNav.hasAttribute('data-dsh-outline-hides-official-nav'),
+  )
+  rebuiltNav.remove()
+
+  for (const dispose of first.disposers) dispose()
+  check(
+    'unloading the plugin restores the built-in rail',
+    !officialNav.hasAttribute('data-dsh-outline-hides-official-nav'),
+  )
+  first.root.unmount()
+
+  // Escape hatch: the root attribute keeps the built-in rail visible.
+  document.documentElement.setAttribute('data-dsh-outline-keep-turn-nav', '')
+  const second = await mount({ current: 's1' })
+  check(
+    'opt-out attribute keeps the built-in rail visible',
+    !officialNav.hasAttribute('data-dsh-outline-hides-official-nav'),
+  )
+  for (const dispose of second.disposers) dispose()
+  second.root.unmount()
+  document.documentElement.removeAttribute('data-dsh-outline-keep-turn-nav')
+  officialNav.remove()
 }
 
 const failed = results.filter((r) => !r.ok)

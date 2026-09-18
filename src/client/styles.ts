@@ -11,6 +11,18 @@ import type { Context as ClientContext } from '@deepseek-ai/cordis'
  * pure overlay.
  */
 export const panelCss = `
+/* ---- Built-in Turn navigation rail -------------------------------------- */
+/* DSH 0.1.5 renders its own right-edge rail that marks every TURN and labels
+   the ticks "Turn N" (its prompt preview is empty), so it never shows what the
+   user asked; this plugin's rail answers that question on the same edge. Hide
+   it while this plugin is loaded, keep the markers applied by official-nav.ts
+   for rebuilt subtrees, and honour <html data-dsh-outline-keep-turn-nav>. */
+[data-dsh-outline-hides-official-nav],
+html:not([data-dsh-outline-keep-turn-nav]) nav[aria-label='Turn navigation'],
+html:not([data-dsh-outline-keep-turn-nav]) nav[aria-label='轮次导航'] {
+  display: none !important;
+}
+
 /* ---- Right-edge rail (always-visible minimap) --------------------------- */
 .dso-rail {
   position: fixed;
